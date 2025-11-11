@@ -1,9 +1,8 @@
 from enum import Enum
-from pydantic import BaseModel, EmailStr, Field, field_validator, constr
+from pydantic import BaseModel, Field
 
 # Extra imports for pydantic validation
-from typing import Annotated, Dict, List, Literal, Optional
-from datetime import datetime
+from typing import Dict, Optional
 
 # Response models
 class HealthStatus(str, Enum):
