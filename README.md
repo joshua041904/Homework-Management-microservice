@@ -85,23 +85,33 @@
      You should see "status": "unhealthy" for notification-service and a 503 status code.
 
 - **Project Structure:**
-  milestone1/
+  HomeworkManager/
   ├── README.md
-  ├── CODE_PROVENANCE.md
-  ├── architecture-diagram.png
+  ├── CODE_PROVENANCE.md  
+  ├── architecture-diagram.png  
   ├── docker-compose.yml
+  ├── .gitignore  
+  ├── docs/
+  │ ├── architecture.md  
+  │ └── health-sequence.mmd  
   ├── user-service/
   │ ├── Dockerfile
   │ ├── requirements.txt
+  │ ├── .dockerignore
+  │ └── app/
   │ ├── main.py
   │ └── models.py
   ├── notification-service/
   │ ├── Dockerfile
   │ ├── requirements.txt
+  │ ├── .dockerignore
+  │ └── app/
   │ ├── main.py
   │ └── models.py
   └── hw-service/
   ├── Dockerfile
   ├── requirements.txt
+  ├── .dockerignore
+  └── app/
   ├── main.py
   └── models.py
