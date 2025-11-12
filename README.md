@@ -4,7 +4,7 @@
 - **Architecture Overview:**
   This system consists of three FastAPI microservices orchestrated with Docker Compose:
   1. The user-service handles all user-related operations, such as account creation, deletion, and updates. This service is independent of the other services.
-  2. The hw-service stores/manages homework assignments for each user. The hw-service depends on both the user-service and notification-service. It calls GET user-service:/users/{id} to verify the student exists before adding homework. It also calls POST notification-service:/schedule so that notification-service has the necessary information to send due-date reminders.
+  2. The hw-service stores/manages homework assignments for each user. The hw-service depends on both the user-service and notification-service. It calls GET http://user-service:8000/users/{id} to verify the student exists before adding homework. It also calls POST http://notification-service:8000/schedule so that notification-service has the necessary information to send due-date reminders.
   3. The notification-service receives notification requests from hw-service, stores these requests, and simulates sending notifications to users. This service is independent of the other services.
      If user-service or notification-service goes down, hw-service reports itself as unhealthy through its /health endpoint.
 - **Prerequisites:**
@@ -80,7 +80,7 @@
      http://localhost:8002/health
      http://localhost:8003/health
   3. Stop one service (e.g., notification-service) and recheck hw-service:
-     docker stop notification-service
+     docker compose stop notification-service
      curl http://localhost:8002/health
      You should see "status": "unhealthy" for notification-service and a 503 status code.
 
@@ -98,20 +98,17 @@
   │ ├── Dockerfile
   │ ├── requirements.txt
   │ ├── .dockerignore
-  │ └── app/
   │ ├── main.py
   │ └── models.py
   ├── notification-service/
   │ ├── Dockerfile
   │ ├── requirements.txt
   │ ├── .dockerignore
-  │ └── app/
   │ ├── main.py
   │ └── models.py
   └── hw-service/
   ├── Dockerfile
   ├── requirements.txt
   ├── .dockerignore
-  └── app/
   ├── main.py
   └── models.py

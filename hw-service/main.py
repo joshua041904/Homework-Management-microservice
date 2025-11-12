@@ -1,4 +1,5 @@
 # main.py (hw-service)
+import os
 import time
 import httpx
 from fastapi import FastAPI 
@@ -9,8 +10,8 @@ from models import HealthResponse, DependencyHealth, HealthStatus
 app = FastAPI(title="HW Service")
 
 DEPENDENCIES = {
-    "user-service": "http://user-service:8001/health",
-    "notification-service": "http://notification-service:8003/health",
+   "user-service": os.getenv("USER_HEALTH_URL", "http://user-service:8000/health"),
+   "notification-service": os.getenv("NOTIF_HEALTH_URL", "http://notification-service:8000/health"),
 } 
 
 # Endpoints

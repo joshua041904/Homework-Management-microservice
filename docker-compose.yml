@@ -3,12 +3,11 @@ services:
     build:
       context: ./user-service
       dockerfile: Dockerfile
-    container_name: user-service
     ports:
       - "8001:8000"
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8000/health || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -18,9 +17,11 @@ services:
     build:
       context: ./hw-service
       dockerfile: Dockerfile
-    container_name: hw-service
     ports:
       - "8002:8000"
+    environment:
+      - USER_HEALTH_URL=http://user-service:8000/health
+      - NOTIF_HEALTH_URL=http://notification-service:8000/health
     depends_on:
       user-service:
         condition: service_healthy
@@ -28,7 +29,7 @@ services:
         condition: service_healthy
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8000/health || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -38,12 +39,11 @@ services:
     build:
       context: ./notification-service
       dockerfile: Dockerfile
-    container_name: notification-service
     ports:
       - "8003:8000"
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8003/health"]
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8000/health || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5

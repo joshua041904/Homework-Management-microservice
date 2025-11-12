@@ -41,8 +41,8 @@
 Inter-service communication:
 
 - hw-service communicates with user-service and notification-service over internal Docker network URLs:
-- http://user-service:8001/health
-- http://notification-service:8003/health
+- http://user-service:8000/health
+- http://notification-service:8000/health
   This allows hw-service to check the availability and performance of its dependencies asynchronously using httpx.AsyncClient.
 
 Health check aggregation:
