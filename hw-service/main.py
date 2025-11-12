@@ -17,6 +17,7 @@ DEPENDENCIES = {
 @app.get("/health", response_model=HealthResponse)
 async def health_check():
     """Health check endpoint"""
+    # Dictionary of dependent services and their health status
     deps: dict[str, DependencyHealth] = {}
 
     # --- Check health of each dependent microservice ---

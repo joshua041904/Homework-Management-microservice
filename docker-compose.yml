@@ -1,0 +1,50 @@
+services:
+  user-service:
+    build:
+      context: ./user-service
+      dockerfile: Dockerfile
+    container_name: user-service
+    ports:
+      - "8001:8001"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  hw-service:
+    build:
+      context: ./hw-service
+      dockerfile: Dockerfile
+    container_name: hw-service
+    ports:
+      - "8002:8002"
+    depends_on:
+      user-service:
+        condition: service_healthy
+      notification-service:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  notification-service:
+    build:
+      context: ./notification-service
+      dockerfile: Dockerfile
+    container_name: notification-service
+    ports:
+      - "8003:8003"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8003/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
