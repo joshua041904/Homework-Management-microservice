@@ -91,9 +91,9 @@
   ├── architecture-diagram.png  
   ├── docker-compose.yml
   ├── .gitignore  
+  ├── system-architecture-doc.md  
   ├── docs/
-  │ ├── architecture.md  
-  │ └── health-sequence.mmd  
+  │ └── health-sequence.md  
   ├── user-service/
   │ ├── Dockerfile
   │ ├── requirements.txt
