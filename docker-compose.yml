@@ -58,7 +58,8 @@ services:
         condition: service_healthy
       notification-service:
         condition: service_healthy
-      - hw-db
+      hw-db:
+        condition: service-healthy
     environment:
       PG_DSN: postgresql://hw_service:hw_password@hw-db:5432/homework_db
       USER_HEALTH_URL: http://user-service:8000/health
@@ -111,21 +112,21 @@ services:
     volumes:
       - notification_db_data:/var/lib/postgresql/data
 
-# PGADMIN for visualization
-pgadmin:
-  image: dpage/pgadmin4
-  container_name: pgadmin
-  depends_on:
-    - user-db
-    - hw-db
-    - notification-db
-  environment:
-    PGADMIN_DEFAULT_EMAIL: admin@example.com
-    PGADMIN_DEFAULT_PASSWORD: admin
-  ports:
-    - "5050:80"
-  volumes:
-    - pgadmin_data:/var/lib/pgadmin
+  # PGADMIN for visualization
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin
+    depends_on:
+      - user-db
+      - hw-db
+      - notification-db
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@example.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
 
 volumes:
   user_db_data:
