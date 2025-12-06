@@ -1,11 +1,33 @@
 services:
+  # API GATEWAY (nginx)
+  nginx:
+    image: nginx:alpine
+    container_name: api-gateway
+    depends_on:
+      user-service:
+        condition: service_healthy
+      hw-service:
+        condition: service_healthy
+      notification-service:
+        condition: service_healthy
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    ports:
+      - "8080:80"
+    restart: unless-stopped
+
+  # USER SERVICE and DB
   user-service:
     build:
       context: ./user-service
       dockerfile: Dockerfile
-    ports:
-      - "8001:8000"
     restart: unless-stopped
+    depends_on:
+      - user-db
+    environment:
+      # connects with db.py
+      # Every FastAPI microservice receives a unique PG_DSN environment variable so it can connect to its own database
+      PG_DSN: postgresql://user_service:user_password@user-db:5432/users_db
     healthcheck:
       test: ["CMD-SHELL", "curl -fsS http://localhost:8000/health || exit 1"]
       interval: 10s
@@ -13,21 +35,34 @@ services:
       retries: 5
       start_period: 10s
 
+  # Postgres instance that stores users
+  user-db:
+    image: postgres:16
+    container_name: user-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: user_service
+      POSTGRES_PASSWORD: user_password
+      POSTGRES_DB: users_db
+    volumes:
+      - user_db_data:/var/lib/postgresql/data
+
+  # HOMEWORK SERVICE and DB
   hw-service:
     build:
       context: ./hw-service
       dockerfile: Dockerfile
-    ports:
-      - "8002:8000"
-    environment:
-      - USER_HEALTH_URL=http://user-service:8000/health
-      - NOTIF_HEALTH_URL=http://notification-service:8000/health
+    restart: unless-stopped
     depends_on:
       user-service:
         condition: service_healthy
       notification-service:
         condition: service_healthy
-    restart: unless-stopped
+      - hw-db
+    environment:
+      PG_DSN: postgresql://hw_service:hw_password@hw-db:5432/homework_db
+      USER_HEALTH_URL: http://user-service:8000/health
+      NOTIF_HEALTH_URL: http://notification-service:8000/health
     healthcheck:
       test: ["CMD-SHELL", "curl -fsS http://localhost:8000/health || exit 1"]
       interval: 10s
@@ -35,16 +70,65 @@ services:
       retries: 5
       start_period: 10s
 
+  # Postgres instance that stores homework
+  hw-db:
+    image: postgres:16
+    container_name: hw-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: hw_service
+      POSTGRES_PASSWORD: hw_password
+      POSTGRES_DB: homework_db
+    volumes:
+      - hw_db_data:/var/lib/postgresql/data
+
+  # NOTIFICATION SERVICE and DB
   notification-service:
     build:
       context: ./notification-service
       dockerfile: Dockerfile
-    ports:
-      - "8003:8000"
     restart: unless-stopped
+    depends_on:
+      - notification-db
+    environment:
+      PG_DSN: postgresql://notif_service:notif_password@notification-db:5432/notifications_db
     healthcheck:
       test: ["CMD-SHELL", "curl -fsS http://localhost:8000/health || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 10s
+
+  # Postgres instance that stores notifications
+  notification-db:
+    image: postgres:16
+    container_name: notification-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: notif_service
+      POSTGRES_PASSWORD: notif_password
+      POSTGRES_DB: notifications_db
+    volumes:
+      - notification_db_data:/var/lib/postgresql/data
+
+# PGADMIN for visualization
+pgadmin:
+  image: dpage/pgadmin4
+  container_name: pgadmin
+  depends_on:
+    - user-db
+    - hw-db
+    - notification-db
+  environment:
+    PGADMIN_DEFAULT_EMAIL: admin@example.com
+    PGADMIN_DEFAULT_PASSWORD: admin
+  ports:
+    - "5050:80"
+  volumes:
+    - pgadmin_data:/var/lib/pgadmin
+
+volumes:
+  user_db_data:
+  hw_db_data:
+  notification_db_data:
+  pgadmin_data:
