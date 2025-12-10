@@ -35,3 +35,21 @@ def close_db_connection():
 def get_session():
     with Session(engine) as session:
         yield session
+
+def db_create_notification(
+    session: Session,
+    user_id: int,
+    homework_id: int,
+    message: str,
+    due_date: datetime,
+) -> Notifications:
+    notification = Notifications(
+        user_id = user_id,
+        homework_id = homework_id,
+        message = message,
+        due_date = due_date,
+    )
+    session.add(notification)
+    session.commit()
+    session.refresh(notification)
+    return notification
