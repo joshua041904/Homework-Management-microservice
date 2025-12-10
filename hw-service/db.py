@@ -33,3 +33,22 @@ def close_db_connection():
 def get_session():
     with Session(engine) as session:
         yield session
+
+
+def db_create_assignment(
+    session: Session,
+    user_id: int,
+    assignment_name: str,
+    course: str | None,
+    due_date: datetime,
+) -> Homework:
+    hw = Homework(
+        user_id=user_id,
+        assignment_name=assignment_name,
+        course=course,
+        due_date=due_date,
+    )
+    session.add(hw)
+    session.commit()
+    session.refresh(hw)
+    return hw
