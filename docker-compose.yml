@@ -6,7 +6,9 @@ services:
     depends_on:
       user-service:
         condition: service_healthy
-      hw-service:
+      hw-service-1:
+        condition: service_healthy
+      hw-service-2:
         condition: service_healthy
       notification-service:
         condition: service_healthy
@@ -48,18 +50,35 @@ services:
       - user_db_data:/var/lib/postgresql/data
 
   # HOMEWORK SERVICE and DB
-  hw-service:
+  hw-service-1:
     build:
       context: ./hw-service
       dockerfile: Dockerfile
     restart: unless-stopped
     depends_on:
-      user-service:
-        condition: service_healthy
-      notification-service:
-        condition: service_healthy
-      hw-db:
-        condition: service-healthy
+      - user-service
+      - notification-service
+      - hw-db
+    environment:
+      PG_DSN: postgresql://hw_service:hw_password@hw-db:5432/homework_db
+      USER_HEALTH_URL: http://user-service:8000/health
+      NOTIF_HEALTH_URL: http://notification-service:8000/health
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8000/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  hw-service-2:
+    build:
+      context: ./hw-service
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      - user-service
+      - notification-service
+      - hw-db
     environment:
       PG_DSN: postgresql://hw_service:hw_password@hw-db:5432/homework_db
       USER_HEALTH_URL: http://user-service:8000/health
