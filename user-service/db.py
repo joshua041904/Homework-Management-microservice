@@ -33,3 +33,19 @@ def close_db_connection():
 def get_session():
     with Session(engine) as session:
         yield session
+
+def db_create_user(
+    session: Session,
+    name: str,
+    email: str,
+    grade_level: str | None,
+) -> User:
+    user = User(
+        name=name,
+        email=email,
+        grade_level=grade_level,
+    )
+    session.add(user)
+    session.commit()
+    session.refresh(user)
+    return user
