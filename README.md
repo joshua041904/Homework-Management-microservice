@@ -1,114 +1,150 @@
-- **Project Title and Description:**
-  Homework Manager is a microservices-based system designed to help students organize their homework assignments and deadlines. Students can add upcoming assignments and due dates. On the due date, they receive a notification reminding them that an assignment is due.
+### **Project Title and Description:**
 
-- **Architecture Overview:**
-  This system consists of three FastAPI microservices orchestrated with Docker Compose:
-  1. The user-service handles all user-related operations, such as account creation, deletion, and updates. This service is independent of the other services.
-  2. The hw-service stores/manages homework assignments for each user. The hw-service depends on both the user-service and notification-service. It calls GET http://user-service:8000/users/{id} to verify the student exists before adding homework. It also calls POST http://notification-service:8000/schedule so that notification-service has the necessary information to send due-date reminders.
-  3. The notification-service receives notification requests from hw-service, stores these requests, and simulates sending notifications to users. This service is independent of the other services.
-     If user-service or notification-service goes down, hw-service reports itself as unhealthy through its /health endpoint.
-- **Prerequisites:**
-  The required software for this service includes Docker, Docker Compose, Python 3.11+.
-- **Installation & Setup:**
+Homework Manager is a microservices-based system designed to help students organize their homework assignments and deadlines. Students can add upcoming assignments and due dates. On the due date, they receive a notification reminding them that an assignment is due.
 
-  1. Clone the repository: git clone https://github.com/joshua041904/Homework-Management-microservice.git
-  2. Build and start all services: docker-compose up --build
+### **Architecture Overview:**
+
+This system consists of three FastAPI microservices and an NGINX service orchestrated with Docker Compose:
+
+1. user-service
+
+- Manages user accounts
+- Stores user information in its own Postgres database
+- Independent (no downstream dependencies)
+
+2. hw-service
+
+- Stores user's homework entries in its own Postgres database
+- Validates user existence by calling: GET http://user-service:8000/users/{id}
+- After creating homework, schedules reminders by calling: POST http://notification-service:8000/notifications
+- Aggregates health of user-service and notification-service
+
+3. notification-service
+
+- Receives notification requests from hw-service
+- Stores them in its own Postgres DB
+- Simulates sending notifications
+- Independent service
+
+If user-service or notification-service goes down, hw-service reports itself as unhealthy through its /health endpoint.
+
+4. API GATEWAY (NGINX)
+   Routes all client traffic:
+   http://localhost:8080/users/_ ==> user-service
+   http://localhost:8080/homework/_ ==> hw-service
+   http://localhost:8080/notifications/\* ==> notification-service
+   All services are accessed through a single gateway: http://localhost:8080
+
+### **Prerequisites:**
+
+Required software includes:
+
+- Docker
+- Docker Compose
+- Python 3.11+
+
+### **Installation & Setup:**
+
+1. Clone the repository
+   git clone https://github.com/joshua041904/Homework-Management-microservice.git
+2. Build and start all services
+   - docker-compose up --build
      This will:
-     Build Docker images for all three services
-     Start containers with network communication enabled
-     Expose ports:
-     user-service: 8001
-     hw-service: 8002
-     notification-service: 8003
+   - Build & launch all 3 microservices
+   - Start 3 Postgres instances
+   - Start NGINX API gateway (port 8080)
+   - Start PGAdmin (port 5050)
 
-- **Usage Instructions:**
-  How to check health of your services (example curl commands or API endpoints)
-  You can access health endpoints using curl commands once all containers are running.
-  Check user-service: curl http://localhost:8001/health
-  Check notification-service: curl http://localhost:8003/health
-  Check hw-service (aggregates dependency health): curl http://localhost:8002/health
+### **Usage Instructions:**
+
+- **Health Checks (through API Gateway)**
+  curl http://localhost:8080/users/health
+  curl http://localhost:8080/homework/health
+  curl http://localhost:8080/notifications/health
   Each will return a JSON health response with service name, status, and dependencies (if any).
 
-- **API Documentation:**
-  List of all health endpoints with request/response examples:
+Example Responses
+user-service
+{
+"service": "user-service",
+"status": "healthy",
+"dependencies": {}
+}
 
-  1. user-service
-     endpoint: /health
-     example request: curl http://localhost:8001/health
-     example response:
-     {
-     "service": "user-service",
-     "status": "healthy",
-     "dependencies": {}
-     }
+hw-service
+{
+"service": "hw-service",
+"status": "healthy",
+"dependencies": {
+"user-service": { "status": "healthy", "response_time_ms": 12 },
+"notification-service": { "status": "healthy", "response_time_ms": 10 }
+}
+}
 
-  2. hw-service
-     endpoint: /health
-     example request: curl http://localhost:8002/health
-     example response:
-     {
-     "service": "hw-service",
-     "status": "healthy",
-     "dependencies": {
-     "user-service": {
-     "status": "healthy",
-     "response_time_ms": 12
-     },
-     "notification-service": {
-     "status": "healthy",
-     "response_time_ms": 10
-     }
-     }
-     }
+notification-service
+{
+"service": "notification-service",
+"status": "healthy",
+"dependencies": {}
+}
 
-  3. notification-service
-     endpoint: /health
-     example request: curl http://localhost:8003/health
-     example response:
-     {
-     "service": "notification-service",
-     "status": "healthy",
-     "dependencies": {}
-     }
+- **API Testing**
 
-- **Testing:**
-  How to test the system (manual testing steps or test commands)
+1. Create a User
+   curl -X POST http://localhost:8080/users/ \
+    -H "Content-Type: application/json" \
+    -d '{"name": "Alice", "email": "alice@test.com", "grade_level": "11"}'
 
-  1. Run the system with: docker-compose up
-  2. Open the browser at:
-     http://localhost:8001/health
-     http://localhost:8002/health
-     http://localhost:8003/health
-  3. Stop one service (e.g., notification-service) and recheck hw-service:
-     docker compose stop notification-service
-     curl http://localhost:8002/health
-     You should see "status": "unhealthy" for notification-service and a 503 status code.
+2. Create a Homework Entry
+   curl -X POST http://localhost:8080/homework/ \
+    -H "Content-Type: application/json" \
+    -d '{"user_id": 1, "assignment_name": "Math Worksheet", "course": "Math", "due_date": "2025-02-15T12:00:00"}'
 
-- **Project Structure:**
-  HomeworkManager/
-  ├── README.md
-  ├── CODE_PROVENANCE.md  
-  ├── architecture-diagram.png  
-  ├── docker-compose.yml
-  ├── .gitignore  
-  ├── system-architecture-doc.md  
-  ├── docs/
-  │ └── health-sequence.md  
-  ├── user-service/
-  │ ├── Dockerfile
-  │ ├── requirements.txt
-  │ ├── .dockerignore
-  │ ├── main.py
-  │ └── models.py
-  ├── notification-service/
-  │ ├── Dockerfile
-  │ ├── requirements.txt
-  │ ├── .dockerignore
-  │ ├── main.py
-  │ └── models.py
-  └── hw-service/
-  ├── Dockerfile
-  ├── requirements.txt
-  ├── .dockerignore
-  ├── main.py
-  └── models.py
+This will automatically trigger:
+
+- user validation: hw-service → user-service
+- notification creation: hw-service → notification-service
+
+3. Check Dependencies
+   Stop a service:
+
+- docker compose stop notification-service
+  Check hw-service health:
+- curl http://localhost:8080/homework/health
+  You will see "status": "unhealthy" for notification-service and a 503 status code.
+
+- **How to Stop the System**
+  docker-compose down
+
+- **Rebuild Cleanly**
+  docker-compose down --volumes
+  docker-compose up --build
+
+### **Project Structure:**
+
+HomeworkManager/
+├── README.md
+├── CODE_PROVENANCE.md
+├── architecture-diagram.png
+├── docker-compose.yml
+├── system-architecture-doc.md
+├── docs/
+│ └── health-sequence.md
+├── user-service/
+│ ├── Dockerfile
+│ ├── requirements.txt
+│ ├── main.py
+│ ├── models.py
+│ └── db.py
+├── notification-service/
+│ ├── Dockerfile
+│ ├── requirements.txt
+│ ├── main.py
+│ ├── models.py
+│ └── db.py
+└── hw-service/
+├── Dockerfile
+├── requirements.txt
+├── main.py
+├── models.py
+└── db.py
