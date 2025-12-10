@@ -1,5 +1,6 @@
+from datetime import datetime
 from enum import Enum
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 # Extra imports for pydantic validation
 from typing import Dict, Optional
@@ -19,4 +20,23 @@ class HealthResponse(BaseModel):
     status: HealthStatus
     # Map dependent-service-name -> health info
     dependencies: Dict[str, DependencyHealth] = Field(default_factory=dict)
+
+class HomeworkCreate(BaseModel):
+    user_id: int
+    assignment_name: str
+    course: Optional[str] = None
+    due_date: datetime
     
+class HomeworkUpdate(BaseModel):
+    assignment_name: Optional[str] = None
+    course: Optional[str] = None
+    due_date: Optional[datetime] = None
+
+class HomeworkResponse(BaseModel):
+    id: int
+    user_id: int
+    assignment_name: str
+    course: Optional[str] = None
+    due_date: datetime
+    created_at: datetime
+    model_config = ConfigDict(from_attributes=True)
