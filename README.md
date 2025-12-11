@@ -1,8 +1,8 @@
-### **Project Title and Description:**
+# **Project Title and Description:**
 
 Homework Manager is a microservices-based system designed to help students organize their homework assignments and deadlines. Students can add upcoming assignments and due dates. On the due date, they receive a notification reminding them that an assignment is due.
 
-### **Architecture Overview:**
+# **Architecture Overview:**
 
 This system consists of three FastAPI microservices and an NGINX service orchestrated with Docker Compose:
 
@@ -38,7 +38,7 @@ If user-service or notification-service goes down, hw-service reports itself as 
    - http://localhost:8080/notifications/\* ==> notification-service
    - All services are accessed through a single gateway: http://localhost:8080
 
-### **Prerequisites:**
+# **Prerequisites:**
 
 Required software includes:
 
@@ -46,7 +46,7 @@ Required software includes:
 - Docker Compose
 - Python 3.11+
 
-### **Installation & Setup:**
+# **Installation & Setup:**
 
 1. Clone the repository
 
@@ -67,7 +67,7 @@ This will:
 - Start NGINX API gateway (port 8080)
 - Start PGAdmin (port 5050)
 
-### **Usage Instructions:**
+# **Usage Instructions:**
 
 - **Health Checks (through API Gateway)**
 
@@ -128,6 +128,7 @@ This will automatically trigger:
 - notification creation: hw-service → notification-service
 
 3. Check Dependencies
+
    Stop a service:
 
 ```bash
@@ -160,7 +161,7 @@ You will see "status": "unhealthy" for notification-service and a 503 status cod
     docker-compose up --build
 ```
 
-### **Project Structure:**
+# **Project Structure:**
 
 HomeworkManager/
 ├── README.md
