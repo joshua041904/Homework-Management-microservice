@@ -18,6 +18,7 @@ This system consists of three FastAPI microservices and an NGINX service orchest
 - Validates user existence by calling: GET http://user-service:8000/users/{id}
 - After creating homework, schedules reminders by calling: POST http://notification-service:8000/notifications
 - Aggregates health of user-service and notification-service
+- hw-service is horizontally scaled (two replicas: hw-service-1 & hw-service-2). NGINX load balances /homework/\* across both
 
 3. notification-service
 
@@ -30,8 +31,8 @@ If user-service or notification-service goes down, hw-service reports itself as 
 
 4. API GATEWAY (NGINX)
    Routes all client traffic:
-   http://localhost:8080/users/_ ==> user-service
-   http://localhost:8080/homework/_ ==> hw-service
+   http://localhost:8080/users/\* ==> user-service
+   http://localhost:8080/homework/\* ==> hw-service
    http://localhost:8080/notifications/\* ==> notification-service
    All services are accessed through a single gateway: http://localhost:8080
 
@@ -58,9 +59,9 @@ Required software includes:
 ### **Usage Instructions:**
 
 - **Health Checks (through API Gateway)**
-  curl http://localhost:8080/users/health
-  curl http://localhost:8080/homework/health
-  curl http://localhost:8080/notifications/health
+  curl http://localhost:8080/users/health/
+  curl http://localhost:8080/homework/health/
+  curl http://localhost:8080/notifications/health/
   Each will return a JSON health response with service name, status, and dependencies (if any).
 
 Example Responses
@@ -118,7 +119,8 @@ This will automatically trigger:
 
 - **Rebuild Cleanly**
   docker-compose down --volumes
-  docker-compose up --build
+  - Warning: docker-compose down --volumes will delete all Postgres data and start with empty databases next time.
+    docker-compose up --build
 
 ### **Project Structure:**
 
