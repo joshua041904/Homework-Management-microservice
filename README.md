@@ -30,11 +30,13 @@ This system consists of three FastAPI microservices and an NGINX service orchest
 If user-service or notification-service goes down, hw-service reports itself as unhealthy through its /health endpoint.
 
 4. API GATEWAY (NGINX)
+
    Routes all client traffic:
-   http://localhost:8080/users/\* ==> user-service
-   http://localhost:8080/homework/\* ==> hw-service
-   http://localhost:8080/notifications/\* ==> notification-service
-   All services are accessed through a single gateway: http://localhost:8080
+
+   - http://localhost:8080/users/\* ==> user-service
+   - http://localhost:8080/homework/\* ==> hw-service
+   - http://localhost:8080/notifications/\* ==> notification-service
+   - All services are accessed through a single gateway: http://localhost:8080
 
 ### **Prerequisites:**
 
@@ -47,10 +49,14 @@ Required software includes:
 ### **Installation & Setup:**
 
 1. Clone the repository
+   ```bash
    git clone https://github.com/joshua041904/Homework-Management-microservice.git
+   ```
 2. Build and start all services
-   - docker-compose up --build
-     This will:
+   ```bash
+   docker-compose up --build
+   ```
+   This will:
    - Build & launch all 3 microservices
    - Start 3 Postgres instances
    - Start NGINX API gateway (port 8080)
