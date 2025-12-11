@@ -49,26 +49,35 @@ Required software includes:
 ### **Installation & Setup:**
 
 1. Clone the repository
-   ```bash
+
+```bash
    git clone https://github.com/joshua041904/Homework-Management-microservice.git
-   ```
+```
+
 2. Build and start all services
-   ```bash
+
+```bash
    docker-compose up --build
-   ```
-   This will:
-   - Build & launch all 3 microservices
-   - Start 3 Postgres instances
-   - Start NGINX API gateway (port 8080)
-   - Start PGAdmin (port 5050)
+```
+
+This will:
+
+- Build & launch all 3 microservices
+- Start 3 Postgres instances
+- Start NGINX API gateway (port 8080)
+- Start PGAdmin (port 5050)
 
 ### **Usage Instructions:**
 
 - **Health Checks (through API Gateway)**
+
+```bash
   curl http://localhost:8080/users/health/
   curl http://localhost:8080/homework/health/
   curl http://localhost:8080/notifications/health/
-  Each will return a JSON health response with service name, status, and dependencies (if any).
+```
+
+Each will return a JSON health response with service name, status, and dependencies (if any).
 
 Example Responses
 user-service
@@ -98,14 +107,20 @@ notification-service
 - **API Testing**
 
 1. Create a User
+
+```bash
    curl -X POST http://localhost:8080/users/ \
     -H "Content-Type: application/json" \
     -d '{"name": "Alice", "email": "alice@test.com", "grade_level": "11"}'
+```
 
 2. Create a Homework Entry
+
+```bash
    curl -X POST http://localhost:8080/homework/ \
     -H "Content-Type: application/json" \
     -d '{"user_id": 1, "assignment_name": "Math Worksheet", "course": "Math", "due_date": "2025-02-15T12:00:00"}'
+```
 
 This will automatically trigger:
 
@@ -115,18 +130,35 @@ This will automatically trigger:
 3. Check Dependencies
    Stop a service:
 
-- docker compose stop notification-service
-  Check hw-service health:
-- curl http://localhost:8080/homework/health
-  You will see "status": "unhealthy" for notification-service and a 503 status code.
+```bash
+   docker compose stop notification-service
+```
+
+Check hw-service health:
+
+```bash
+  curl http://localhost:8080/homework/health
+```
+
+You will see "status": "unhealthy" for notification-service and a 503 status code.
 
 - **How to Stop the System**
+
+```bash
   docker-compose down
+```
 
 - **Rebuild Cleanly**
+
+```bash
   docker-compose down --volumes
-  - Warning: docker-compose down --volumes will delete all Postgres data and start with empty databases next time.
+```
+
+- Warning: docker-compose down --volumes will delete all Postgres data and start with empty databases next time.
+
+```bash
     docker-compose up --build
+```
 
 ### **Project Structure:**
 
