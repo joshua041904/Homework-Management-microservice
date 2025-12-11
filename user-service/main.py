@@ -15,7 +15,7 @@ init_db creates the tables
 async def on_startup():
     init_db()
 
-# Endpoints
+# ---------- Health endpoint ----------
 @app.get("/health", response_model=HealthResponse)
 async def health_check():
     """Health check endpoint"""
@@ -24,6 +24,8 @@ async def health_check():
         status=HealthStatus.healthy,
         dependencies={} # No downstream dependencies for user-service
     )
+
+# ---------- CRUD endpoints ----------
 
 # POST /users
 @app.post("/users/", response_model=UserResponse, status_code=201)
@@ -46,7 +48,7 @@ async def get_user(user_id: int, session: Session = Depends(get_session)):
         raise HTTPException(status_code=404, detail="User not found")
     return user
 
-# PUT/PATCH /users/{id}
+# PUT /users/{id}
 @app.put("/users/{user_id}", response_model=UserResponse)
 async def update_user(user_id: int, user_update: UserUpdate, session: Session = Depends(get_session)):
     # Retrieve user from database
@@ -54,7 +56,7 @@ async def update_user(user_id: int, user_update: UserUpdate, session: Session = 
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     
-    # Apply partial updates
+    # Apply updates
     user_data = user_update.model_dump(exclude_unset=True)
     for key, value in user_data.items():
         setattr(user, key, value)

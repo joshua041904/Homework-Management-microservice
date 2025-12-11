@@ -11,7 +11,7 @@ app = FastAPI(title="Notification Service")
 def on_startup():
     init_db()
 
-# Endpoints
+# ---------- Health endpoint ----------
 @app.get("/health", response_model=HealthResponse)
 async def health_check():
     """Health check endpoint"""
@@ -20,6 +20,8 @@ async def health_check():
         status=HealthStatus.healthy,
         dependencies={} # No downstream dependencies for notification-service
     )
+
+# ---------- CRUD endpoints ----------
 
 # POST /notifications
 @app.post("/notifications/", response_model=NotificationResponse, status_code=201)
@@ -43,7 +45,7 @@ async def get_notification(notification_id: int, session: Session = Depends(get_
         raise HTTPException(status_code=404, detail="Notification not found")
     return notification
 
-# maybe DELETE /notifications/{id}
+# DELETE /notifications/{id}
 @app.delete("/notifications/{notification_id}")
 async def delete_notification(notification_id: int, session: Session = Depends(get_session)):
     notification = session.get(Notifications, notification_id)
