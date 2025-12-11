@@ -24,7 +24,7 @@ async def health_check():
 # ---------- CRUD endpoints ----------
 
 # POST /notifications
-@app.post("/notifications/", response_model=NotificationResponse, status_code=201)
+@app.post("/", response_model=NotificationResponse, status_code=201)
 async def create_notification(notification: NotificationCreate, session: Session = Depends(get_session)):
     """Create a new notification"""
     notification_row = db_create_notification(
@@ -36,8 +36,8 @@ async def create_notification(notification: NotificationCreate, session: Session
     )
     return notification_row
 
-# GET /notifications
-@app.get("/notifications/{notification_id}", response_model=NotificationResponse)
+# GET /notifications/{notifications_id}
+@app.get("/{notification_id}", response_model=NotificationResponse)
 async def get_notification(notification_id: int, session: Session = Depends(get_session)):
     # Look up notification in Postgres database
     notification = session.get(Notifications, notification_id)
@@ -45,8 +45,8 @@ async def get_notification(notification_id: int, session: Session = Depends(get_
         raise HTTPException(status_code=404, detail="Notification not found")
     return notification
 
-# DELETE /notifications/{id}
-@app.delete("/notifications/{notification_id}")
+# DELETE /notifications/{notification_id}
+@app.delete("/{notification_id}")
 async def delete_notification(notification_id: int, session: Session = Depends(get_session)):
     notification = session.get(Notifications, notification_id)
     if not notification:

@@ -29,8 +29,9 @@ DEPENDENCIES = {
 }
 
 # Base URLs for other services
-USER_SERVICE_URL = "http://user-service:8000/users" 
-NOTIFICATION_SERVICE_URL = "http://notification-service:8000/notifications/" 
+USER_SERVICE_URL = "http://user-service:8000"
+NOTIFICATION_SERVICE_URL = "http://notification-service:8000"
+
 
 # ---------- Helper: check user-service ----------
 async def verify_user_exists(user_id: int):
@@ -132,7 +133,7 @@ async def health_check():
 # ---------- CRUD endpoints ----------
 
 # POST /homework
-@app.post("/homework/", response_model=HomeworkResponse, status_code=201)
+@app.post("/", response_model=HomeworkResponse, status_code=201)
 async def create_homework(hw: HomeworkCreate, session: Session = Depends(get_session)):
     # 1. Ensure user exists via user-service
     await verify_user_exists(hw.user_id)
@@ -153,7 +154,7 @@ async def create_homework(hw: HomeworkCreate, session: Session = Depends(get_ses
 
 
 # GET /homework/{id}
-@app.get("/homework/{hw_id}", response_model=HomeworkResponse)
+@app.get("/{hw_id}", response_model=HomeworkResponse)
 async def get_homework(hw_id: int, session: Session = Depends(get_session)):
     # Look up the hw in Postgres database
     homework = session.get(Homework, hw_id)
@@ -163,7 +164,7 @@ async def get_homework(hw_id: int, session: Session = Depends(get_session)):
 
 
 # PUT /homework/{id}
-@app.put("/homework/{hw_id}", response_model=HomeworkResponse)
+@app.put("/{hw_id}", response_model=HomeworkResponse)
 async def update_homework(hw_id: int, hw_update: HomeworkUpdate, session: Session = Depends(get_session)):
     # Retrieve hw from database
     hw = session.get(Homework, hw_id)
@@ -182,7 +183,7 @@ async def update_homework(hw_id: int, hw_update: HomeworkUpdate, session: Sessio
 
 
 # DELETE /homework/{id}
-@app.delete("/homework/{hw_id}")
+@app.delete("/{hw_id}")
 def delete_homework(hw_id: int, session: Session = Depends(get_session)):
     hw = session.get(Homework, hw_id)
     if not hw:

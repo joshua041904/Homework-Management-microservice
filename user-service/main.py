@@ -28,7 +28,7 @@ async def health_check():
 # ---------- CRUD endpoints ----------
 
 # POST /users
-@app.post("/users/", response_model=UserResponse, status_code=201)
+@app.post("/", response_model=UserResponse, status_code=201)
 async def create_user(user: UserCreate, session: Session = Depends(get_session)):
     """Create a new user"""
     user_row = db_create_user(
@@ -40,7 +40,7 @@ async def create_user(user: UserCreate, session: Session = Depends(get_session))
     return user_row
 
 # GET /users/{id}
-@app.get("/users/{user_id}", response_model=UserResponse)
+@app.get("/{user_id}", response_model=UserResponse)
 async def get_user(user_id: int, session: Session = Depends(get_session)):
     # Look up user in Postgres database
     user = session.get(User, user_id)
@@ -49,7 +49,7 @@ async def get_user(user_id: int, session: Session = Depends(get_session)):
     return user
 
 # PUT /users/{id}
-@app.put("/users/{user_id}", response_model=UserResponse)
+@app.put("/{user_id}", response_model=UserResponse)
 async def update_user(user_id: int, user_update: UserUpdate, session: Session = Depends(get_session)):
     # Retrieve user from database
     user = session.get(User, user_id)
@@ -68,7 +68,7 @@ async def update_user(user_id: int, user_update: UserUpdate, session: Session = 
     return user
 
 # DELETE /users/{id}
-@app.delete("/users/{user_id}")
+@app.delete("/{user_id}")
 async def delete_user(user_id: int, session: Session = Depends(get_session)):
     user = session.get(User, user_id)
     if not user:

@@ -15,8 +15,8 @@ This system consists of three FastAPI microservices and an NGINX service orchest
 2. hw-service
 
 - Stores user's homework entries in its own Postgres database
-- Validates user existence by calling: GET http://user-service:8000/users/{id}
-- After creating homework, schedules reminders by calling: POST http://notification-service:8000/notifications
+- Validates user existence by calling: GET http://user-service:8000/{id}
+- After creating homework, schedules reminders by calling: POST http://notification-service:8000/
 - Aggregates health of user-service and notification-service
 - hw-service is horizontally scaled (two replicas: hw-service-1 & hw-service-2). NGINX load balances /homework/\* across both
 
@@ -57,7 +57,7 @@ Required software includes:
 2. Build and start all services
 
 ```bash
-   docker-compose up --build
+   docker-compose up -d --build
 ```
 
 This will:
@@ -69,18 +69,20 @@ This will:
 
 # **Usage Instructions:**
 
-- **Health Checks (through API Gateway)**
+## **Health Checks (through API Gateway)**
 
 ```bash
-  curl http://localhost:8080/users/health/
-  curl http://localhost:8080/homework/health/
-  curl http://localhost:8080/notifications/health/
+  curl http://localhost:8080/users/health
+  curl http://localhost:8080/homework/health
+  curl http://localhost:8080/notifications/health
 ```
 
 Each will return a JSON health response with service name, status, and dependencies (if any).
 
-Example Responses
+**Example Responses**
+
 user-service
+
 {
 "service": "user-service",
 "status": "healthy",
@@ -88,6 +90,7 @@ user-service
 }
 
 hw-service
+
 {
 "service": "hw-service",
 "status": "healthy",
@@ -98,13 +101,14 @@ hw-service
 }
 
 notification-service
+
 {
 "service": "notification-service",
 "status": "healthy",
 "dependencies": {}
 }
 
-- **API Testing**
+## **API Testing**
 
 1. Create a User
 
@@ -114,7 +118,13 @@ notification-service
     -d '{"name": "Alice", "email": "alice@test.com", "grade_level": "11"}'
 ```
 
-2. Create a Homework Entry
+2. Verify the user exists
+
+```bash
+    curl http://localhost:8080/users/1
+```
+
+3. Create homework for that user
 
 ```bash
    curl -X POST http://localhost:8080/homework/ \
@@ -122,20 +132,26 @@ notification-service
     -d '{"user_id": 1, "assignment_name": "Math Worksheet", "course": "Math", "due_date": "2025-02-15T12:00:00"}'
 ```
 
+4. Check that the notification was created
+
+```bash
+    curl http://localhost:8080/notifications/1
+```
+
 This will automatically trigger:
 
 - user validation: hw-service → user-service
 - notification creation: hw-service → notification-service
 
-3. Check Dependencies
+5. Check Dependencies
 
-   Stop a service:
+   **Stop a service:**
 
 ```bash
    docker compose stop notification-service
 ```
 
-Check hw-service health:
+**Check hw-service health:**
 
 ```bash
   curl http://localhost:8080/homework/health
