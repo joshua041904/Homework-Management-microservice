@@ -182,10 +182,10 @@ You will see "status": "unhealthy" for notification-service and a 503 status cod
 HomeworkManager/
 ├── README.md
 ├── CODE_PROVENANCE.md
-├── architecture-diagram.png
 ├── docker-compose.yml
 ├── system-architecture-doc.md
 ├── diagrams/
+| ├── architecture-diagram.png
 │ ├── health-sequence.md
 │ └── synchronous-communication.md
 ├── user-service/
