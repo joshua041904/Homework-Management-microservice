@@ -174,7 +174,7 @@ You will see "status": "unhealthy" for notification-service and a 503 status cod
 - Warning: docker-compose down --volumes will delete all Postgres data and start with empty databases next time.
 
 ```bash
-    docker-compose up --build
+    docker-compose up -d --build
 ```
 
 # **Project Structure:**
@@ -185,8 +185,9 @@ HomeworkManager/
 ├── architecture-diagram.png
 ├── docker-compose.yml
 ├── system-architecture-doc.md
-├── docs/
-│ └── health-sequence.md
+├── diagrams/
+│ ├── health-sequence.md
+│ └── synchronous-communication.md
 ├── user-service/
 │ ├── Dockerfile
 │ ├── requirements.txt
