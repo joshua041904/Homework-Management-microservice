@@ -1,7 +1,9 @@
 # main.py (user-service)
+from typing import List
 from sqlmodel import Session
 from fastapi import FastAPI, HTTPException, Depends
 from db import init_db, get_session, db_create_user, User
+import httpx
 
 from models import HealthResponse, HealthStatus, UserCreate, UserResponse, UserUpdate
 
@@ -14,6 +16,9 @@ init_db creates the tables
 @app.on_event("startup")
 async def on_startup():
     init_db()
+
+# Base URLs for other services
+HW_SERVICE_URL = "http://nginx"
 
 # ---------- Health endpoint ----------
 @app.get("/health", response_model=HealthResponse)
@@ -77,3 +82,23 @@ async def delete_user(user_id: int, session: Session = Depends(get_session)):
     session.delete(user)
     session.commit()
     return {"message": "User Deleted"}
+
+# GET /users/{user_id}/homework
+@app.get("/{user_id}/homework")
+async def get_user_homework(user_id: int):
+    """Call hw-service to get the user's homework list"""
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.get(f"{HW_SERVICE_URL}/api/users/{user_id}/homework")
+    except httpx.RequestError as e:
+        # Network/DNS/timeout issues
+        raise HTTPException(
+            status_code=500, detail=f"Could not reach HW Service: {e}"
+        )
+    
+    if response.status_code != 200:
+        raise HTTPException(
+            status_code=500, detail="Failed to fetch homework from HW service"
+        )
+
+    return response.json()
