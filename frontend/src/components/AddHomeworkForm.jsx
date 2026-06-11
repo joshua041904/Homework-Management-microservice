@@ -33,37 +33,58 @@ export default function AddHomeworkForm({ userId, onCreate }) {
   }
 
   return (
-    <form
-      onSubmit={submit}
-      style={{ marginBottom: 16 }}
-    >
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-        <input
-          placeholder="Assignment name"
-          value={assignmentName}
-          onChange={(e) => setAssignmentName(e.target.value)}
-          required
-        />
-        <input
-          placeholder="Course (optional)"
-          value={course}
-          onChange={(e) => setCourse(e.target.value)}
-        />
-        <input
-          type="datetime-local"
-          value={dueDate}
-          onChange={(e) => setDueDate(e.target.value)}
-          required
-        />
+    <form className="homework-form" onSubmit={submit}>
+      <div className="homework-form__fields">
+        <div className="homework-form__field homework-form__field--wide">
+          <label className="homework-form__label" htmlFor="assignment-name">
+            Assignment name
+          </label>
+          <input
+            id="assignment-name"
+            placeholder="e.g. Math Worksheet"
+            value={assignmentName}
+            onChange={(e) => setAssignmentName(e.target.value)}
+            required
+          />
+        </div>
+
+        <div className="homework-form__field">
+          <label className="homework-form__label" htmlFor="course">
+            Course <span className="homework-form__optional">(optional)</span>
+          </label>
+          <input
+            id="course"
+            placeholder="e.g. Biology"
+            value={course}
+            onChange={(e) => setCourse(e.target.value)}
+          />
+        </div>
+
+        <div className="homework-form__field">
+          <label className="homework-form__label" htmlFor="due-date">
+            Due date
+          </label>
+          <input
+            id="due-date"
+            type="datetime-local"
+            value={dueDate}
+            onChange={(e) => setDueDate(e.target.value)}
+            required
+          />
+        </div>
+      </div>
+
+      <div className="homework-form__actions">
         <button
+          className="homework-form__submit"
           type="submit"
           disabled={saving}
         >
-          {saving ? "Adding…" : "Add"}
+          {saving ? "Adding…" : "Add assignment"}
         </button>
       </div>
 
-      {err && <p style={{ color: "crimson" }}>{err}</p>}
+      {err && <p className="status-message status-message--error">{err}</p>}
     </form>
   );
 }

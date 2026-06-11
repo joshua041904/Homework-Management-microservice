@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { createHomework, listHomeworkForUser } from "./api";
 import HomeworkList from "./components/HomeworkList";
 import AddHomeworkForm from "./components/AddHomeworkForm";
+import "./App.css";
 
 export default function App() {
   // For now: hardcode user 1 since you confirmed it works.
@@ -35,17 +36,26 @@ export default function App() {
   }
 
   return (
-    <div style={{ padding: 24, fontFamily: "system-ui" }}>
-      <h1>Homework Manager</h1>
-      <p style={{ opacity: 0.7 }}>Showing homework for user {userId}</p>
+    <div className="app">
+      <header className="app__header">
+        <h1>Homework Manager</h1>
+        <p className="app__subtitle">Showing homework for user {userId}</p>
+      </header>
 
-      <AddHomeworkForm
-        userId={userId}
-        onCreate={handleCreate}
-      />
+      <section className="panel">
+        <h2 className="panel__title">Add assignment</h2>
+        <AddHomeworkForm userId={userId} onCreate={handleCreate} />
+      </section>
 
-      {err && <p style={{ color: "crimson" }}>{err}</p>}
-      {loading ? <p>Loading…</p> : <HomeworkList items={items} />}
+      <section className="panel">
+        <h2 className="panel__title">Your assignments</h2>
+        {err && <p className="status-message status-message--error">{err}</p>}
+        {loading ? (
+          <p className="status-message status-message--muted">Loading…</p>
+        ) : (
+          <HomeworkList items={items} />
+        )}
+      </section>
     </div>
   );
 }
