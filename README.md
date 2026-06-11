@@ -18,7 +18,7 @@ This system consists of three FastAPI microservices and an NGINX service orchest
 - Validates user existence by calling: GET http://user-service:8000/{id}
 - After creating homework, schedules reminders by calling: POST http://notification-service:8000/
 - Aggregates health of user-service and notification-service
-- hw-service is horizontally scaled (two replicas: hw-service-1 & hw-service-2). NGINX load balances /homework/\* across both
+- hw-service is horizontally scaled (two replicas: hw-service-1 & hw-service-2). NGINX load balances /api/homework/\* across both
 
 3. notification-service
 
@@ -31,11 +31,12 @@ If user-service or notification-service goes down, hw-service reports itself as 
 
 4. API GATEWAY (NGINX)
 
-   Routes all client traffic:
+   Routes all client traffic under the `/api` prefix:
 
-   - http://localhost:8080/users/\* ==> user-service
-   - http://localhost:8080/homework/\* ==> hw-service
-   - http://localhost:8080/notifications/\* ==> notification-service
+   - http://localhost:8080/api/users/\* ==> user-service
+   - http://localhost:8080/api/homework/\* ==> hw-service
+   - http://localhost:8080/api/notifications/\* ==> notification-service
+   - http://localhost:8080/api/health ==> gateway health check
    - All services are accessed through a single gateway: http://localhost:8080
 
 # **Prerequisites:**
@@ -44,7 +45,8 @@ Required software includes:
 
 - Docker
 - Docker Compose
-- Python 3.11+
+- Python 3.11+ (for local service development; containers include their own runtime)
+- Node.js 18+ and npm (for the React frontend)
 
 # **Installation & Setup:**
 
@@ -52,12 +54,13 @@ Required software includes:
 
 ```bash
    git clone https://github.com/joshua041904/Homework-Management-microservice.git
+   cd HomeworkManager
 ```
 
-2. Build and start all services
+2. Build and start all backend services
 
 ```bash
-   docker-compose up -d --build
+   docker compose up -d --build
 ```
 
 This will:
@@ -66,6 +69,52 @@ This will:
 - Start 3 Postgres instances
 - Start NGINX API gateway (port 8080)
 - Start PGAdmin (port 5050)
+
+## **Full Local Demo (Backend + Frontend)**
+
+The web UI requires the Docker backend to be running first. The Vite dev server proxies `/api` requests to `http://localhost:8080`. If the gateway is not running, the browser will show HTTP 500 errors (Vite proxy connection refused). See [RCA-api-homework-users-500.md](RCA-api-homework-users-500.md) for details.
+
+**Terminal 1 — start the backend:**
+
+```bash
+   docker compose up -d --build
+```
+
+**Terminal 2 — seed a demo user (required on a fresh database):**
+
+```bash
+   curl -X POST http://localhost:8080/api/users/ \
+     -H "Content-Type: application/json" \
+     -d '{"name": "Demo User", "email": "demo@example.com", "grade_level": "11"}'
+```
+
+**Terminal 2 — start the frontend:**
+
+```bash
+   cd frontend
+   npm install
+   npm run dev
+```
+
+Open http://localhost:5173 in your browser. The UI loads homework for user `1` by default.
+
+**Quick backend check before opening the UI:**
+
+```bash
+   curl http://localhost:8080/api/health
+   curl http://localhost:8080/api/users/1
+```
+
+## **Web UI Demo**
+
+With both terminals running:
+
+1. Open http://localhost:5173
+2. Confirm the homework list loads (empty list is OK on a fresh database)
+3. Add an assignment using the form
+4. Confirm the new item appears in the list
+
+The frontend talks to the backend only through the Vite proxy (`/api` → `localhost:8080`). Do not point the frontend directly at microservice ports.
 
 # **Usage Instructions:**
 
@@ -162,30 +211,44 @@ You will see "status": "unhealthy" for notification-service and a 503 status cod
 - **How to Stop the System**
 
 ```bash
-  docker-compose down
+  docker compose down
 ```
 
 - **Rebuild Cleanly**
 
 ```bash
-  docker-compose down --volumes
+  docker compose down --volumes
 ```
 
-- Warning: docker-compose down --volumes will delete all Postgres data and start with empty databases next time.
+- Warning: `docker compose down --volumes` will delete all Postgres data and start with empty databases next time.
 
 ```bash
-    docker-compose up -d --build
+    docker compose up -d --build
+```
+
+- **Run Integration Smoke Test**
+
+```bash
+  ./test.sh
 ```
 
 # **Project Structure:**
 
 HomeworkManager/
 ├── README.md
+├── RCA-api-homework-users-500.md
+├── test.sh
 ├── CODE_PROVENANCE.md
 ├── docker-compose.yml
 ├── system-architecture-doc.md
+├── nginx/
+│ └── nginx.conf
+├── frontend/
+│ ├── package.json
+│ ├── vite.config.js
+│ └── src/
 ├── diagrams/
-| ├── architecture-diagram.png
+│ ├── architecture-diagram.png
 │ ├── health-sequence.md
 │ └── synchronous-communication.md
 ├── user-service/
@@ -201,8 +264,8 @@ HomeworkManager/
 │ ├── models.py
 │ └── db.py
 └── hw-service/
-├── Dockerfile
-├── requirements.txt
-├── main.py
-├── models.py
-└── db.py
+    ├── Dockerfile
+    ├── requirements.txt
+    ├── main.py
+    ├── models.py
+    └── db.py
