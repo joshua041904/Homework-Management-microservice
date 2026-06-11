@@ -1,4 +1,5 @@
 # main.py (hw-service)
+from typing import List
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.responses import JSONResponse
 from sqlmodel import Session
@@ -6,7 +7,7 @@ import os
 import time
 import httpx
 
-from db import Homework, db_create_assignment, get_session, init_db
+from db import Homework, db_create_assignment, get_session, init_db, db_get_homework_for_user
 from models import (
     HealthResponse,
     DependencyHealth,
@@ -192,3 +193,9 @@ def delete_homework(hw_id: int, session: Session = Depends(get_session)):
     session.delete(hw)
     session.commit()
     return {"message": "HW Deleted"}
+
+# GET homework/users/{user_id}/homework
+@app.get("/users/{user_id}/homework", response_model=List[HomeworkResponse])
+async def list_homework_for_user(user_id: int, session: Session = Depends(get_session)):
+    await verify_user_exists(user_id)
+    return db_get_homework_for_user(session, user_id)

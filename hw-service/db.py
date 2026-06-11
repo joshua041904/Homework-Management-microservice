@@ -1,6 +1,6 @@
-from typing import Optional
+from typing import List, Optional
 
-from sqlmodel import SQLModel, Field, create_engine, Session
+from sqlmodel import SQLModel, Field, create_engine, Session, select
 from datetime import datetime
 import os
 
@@ -52,3 +52,10 @@ def db_create_assignment(
     session.commit()
     session.refresh(hw)
     return hw
+
+def db_get_homework_for_user(
+        session: Session,
+        user_id: int
+) -> List[Homework]:
+    statement = select(Homework).where(Homework.user_id == user_id)
+    return session.exec(statement).all()
