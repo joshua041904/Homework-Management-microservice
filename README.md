@@ -72,9 +72,9 @@ This will:
 ## **Health Checks (through API Gateway)**
 
 ```bash
-  curl -i http://localhost:8080/users/health
-  curl -i http://localhost:8080/homework/health
-  curl -i http://localhost:8080/notifications/health
+  curl -i http://localhost:8080/api/users/health
+  curl -i http://localhost:8080/api/homework/health
+  curl -i http://localhost:8080/api/notifications/health
 ```
 
 Each will return a JSON health response with service name, status, and dependencies (if any).
@@ -113,7 +113,7 @@ notification-service
 1. Create a User
 
 ```bash
-   curl -i -X POST http://localhost:8080/users/ \
+   curl -i -X POST http://localhost:8080/api/users/ \
     -H "Content-Type: application/json" \
     -d '{"name": "Alice", "email": "alice@test.com", "grade_level": "11"}'
 ```
@@ -121,13 +121,13 @@ notification-service
 2. Verify the user exists
 
 ```bash
-    curl -i http://localhost:8080/users/1
+    curl -i http://localhost:8080/api/users/1
 ```
 
 3. Create homework for that user
 
 ```bash
-   curl -i -X POST http://localhost:8080/homework/ \
+   curl -i -X POST http://localhost:8080/api/homework/ \
     -H "Content-Type: application/json" \
     -d '{"user_id": 1, "assignment_name": "Math Worksheet", "course": "Math", "due_date": "2025-02-15T12:00:00"}'
 ```
@@ -135,7 +135,7 @@ notification-service
 4. Check that the notification was created
 
 ```bash
-    curl -i http://localhost:8080/notifications/1
+    curl -i http://localhost:8080/api/notifications/1
 ```
 
 This will automatically trigger:
@@ -154,7 +154,7 @@ This will automatically trigger:
 **Check hw-service health:**
 
 ```bash
-  curl -i http://localhost:8080/homework/health
+  curl -i http://localhost:8080/api/homework/health
 ```
 
 You will see "status": "unhealthy" for notification-service and a 503 status code.
