@@ -2,6 +2,11 @@ import { useEffect, useState } from "react";
 import { createHomework, listHomeworkForUser } from "./api";
 import HomeworkList from "./components/HomeworkList";
 import AddHomeworkForm from "./components/AddHomeworkForm";
+import {
+  HomeworkListError,
+  HomeworkListLoading,
+} from "./components/HomeworkListStatus";
+import { formatListError } from "./utils/errors";
 import "./App.css";
 
 export default function App() {
@@ -10,17 +15,19 @@ export default function App() {
   const userId = 1;
 
   const [items, setItems] = useState([]);
-  const [err, setErr] = useState("");
+  const [listErr, setListErr] = useState("");
   const [loading, setLoading] = useState(true);
 
   async function refresh() {
-    setErr("");
+    setListErr("");
     setLoading(true);
+
     try {
       const data = await listHomeworkForUser(userId);
       setItems(data);
     } catch (e) {
-      setErr(String(e.message || e));
+      setItems([]);
+      setListErr(formatListError(e, userId));
     } finally {
       setLoading(false);
     }
@@ -49,9 +56,10 @@ export default function App() {
 
       <section className="panel">
         <h2 className="panel__title">Your assignments</h2>
-        {err && <p className="status-message status-message--error">{err}</p>}
         {loading ? (
-          <p className="status-message status-message--muted">Loading…</p>
+          <HomeworkListLoading />
+        ) : listErr ? (
+          <HomeworkListError message={listErr} onRetry={refresh} />
         ) : (
           <HomeworkList items={items} />
         )}

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { formatApiError } from "../utils/errors";
 
 export default function AddHomeworkForm({ userId, onCreate }) {
   const [assignmentName, setAssignmentName] = useState("");
@@ -26,7 +27,7 @@ export default function AddHomeworkForm({ userId, onCreate }) {
       setCourse("");
       setDueDate("");
     } catch (e2) {
-      setErr(String(e2.message || e2));
+      setErr(formatApiError(e2));
     } finally {
       setSaving(false);
     }

@@ -1,3 +1,5 @@
+import { ApiError, parseApiErrorBody } from "./utils/errors.js";
+
 const API_BASE = "/api";
 
 /**
@@ -5,20 +7,30 @@ const API_BASE = "/api";
  * - Uses same-origin + Vite proxy → gateway.
  */
 export async function api(path, { method = "GET", body, headers } = {}) {
-  const res = await fetch(`${API_BASE}${path}`, {
-    method,
-    headers: {
-      "Content-Type": "application/json",
-      ...(headers ?? {}),
-    },
-    body: body ? JSON.stringify(body) : undefined,
-  });
+  let res;
+
+  try {
+    res = await fetch(`${API_BASE}${path}`, {
+      method,
+      headers: {
+        "Content-Type": "application/json",
+        ...(headers ?? {}),
+      },
+      body: body ? JSON.stringify(body) : undefined,
+    });
+  } catch (error) {
+    throw error;
+  }
 
   const text = await res.text();
 
   if (!res.ok) {
-    // Include backend body if present — super helpful for debugging.
-    throw new Error(`HTTP ${res.status}: ${text || res.statusText}`);
+    throw new ApiError({
+      status: res.status,
+      detail: parseApiErrorBody(text),
+      body: text,
+      statusText: res.statusText,
+    });
   }
 
   // Some endpoints return plain text (health), others JSON.

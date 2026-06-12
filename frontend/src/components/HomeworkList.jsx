@@ -2,7 +2,12 @@ import HomeworkItem from "./HomeworkItem";
 
 export default function HomeworkList({ items }) {
   if (!items?.length) {
-    return <p className="status-message status-message--muted">No homework yet.</p>;
+    return (
+      <div className="empty-state">
+        <p className="empty-state__title">No assignments yet</p>
+        <p className="empty-state__hint">Add your first assignment above.</p>
+      </div>
+    );
   }
 
   return (
