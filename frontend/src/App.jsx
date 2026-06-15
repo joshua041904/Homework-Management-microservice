@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { createHomework, listHomeworkForUser } from "./api";
 import HomeworkList from "./components/HomeworkList";
 import AddHomeworkForm from "./components/AddHomeworkForm";
+import UserBar from "./components/UserBar";
 import {
   HomeworkListError,
   HomeworkListLoading,
@@ -10,43 +11,40 @@ import { formatListError } from "./utils/errors";
 import "./App.css";
 
 export default function App() {
-  // For now: hardcode user 1 since you confirmed it works.
-  // Next step after refactor: add a user selector / create user UI.
-  const userId = 1;
-
+  const [userId, setUserId] = useState(1);
   const [items, setItems] = useState([]);
   const [listErr, setListErr] = useState("");
   const [loading, setLoading] = useState(true);
 
-  async function refresh() {
+  const refresh = useCallback(async (id = userId) => {
     setListErr("");
     setLoading(true);
 
     try {
-      const data = await listHomeworkForUser(userId);
+      const data = await listHomeworkForUser(id);
       setItems(data);
     } catch (e) {
       setItems([]);
-      setListErr(formatListError(e, userId));
+      setListErr(formatListError(e, id));
     } finally {
       setLoading(false);
     }
-  }
+  }, [userId]);
 
   useEffect(() => {
-    refresh();
-  }, []);
+    refresh(userId);
+  }, [userId, refresh]);
 
   async function handleCreate(payload) {
     await createHomework(payload);
-    await refresh();
+    await refresh(userId);
   }
 
   return (
     <div className="app">
       <header className="app__header">
         <h1>Homework Manager</h1>
-        <p className="app__subtitle">Showing homework for user {userId}</p>
+        <UserBar userId={userId} onUserChange={setUserId} />
       </header>
 
       <section className="panel">
@@ -59,7 +57,7 @@ export default function App() {
         {loading ? (
           <HomeworkListLoading />
         ) : listErr ? (
-          <HomeworkListError message={listErr} onRetry={refresh} />
+          <HomeworkListError message={listErr} onRetry={() => refresh(userId)} />
         ) : (
           <HomeworkList items={items} />
         )}

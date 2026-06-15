@@ -8,10 +8,36 @@
   margin-bottom: 1.5rem;
 }
 
-.app__subtitle {
-  margin: 0.5rem 0 0;
+.user-bar {
+  margin-top: 0.75rem;
+}
+
+.user-bar__subtitle {
+  margin: 0 0 0.75rem;
   color: var(--color-text-muted);
   font-size: 0.95rem;
+}
+
+.user-bar__form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+}
+
+.user-bar__label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-text-muted);
+}
+
+.user-bar__input {
+  width: 5.5rem;
+  flex: 0 0 auto;
+}
+
+.user-bar__load {
+  flex: 0 0 auto;
 }
 
 .panel {
