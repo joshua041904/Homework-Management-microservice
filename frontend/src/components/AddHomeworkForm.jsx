@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { formatApiError } from "../utils/errors";
+import { toApiDateTime } from "../utils/dates";
 import { validateHomeworkForm } from "../utils/validation";
 
 const EMPTY_FIELD_ERRORS = {
@@ -45,8 +46,7 @@ export default function AddHomeworkForm({ userId, onCreate }) {
         user_id: userId,
         assignment_name: values.assignmentName,
         course: values.course,
-        // FastAPI expects an ISO string. datetime-local lacks seconds/timezone.
-        due_date: `${values.dueDate}:00`,
+        due_date: toApiDateTime(values.dueDate),
       });
 
       setAssignmentName("");

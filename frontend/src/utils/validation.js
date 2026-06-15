@@ -1,3 +1,5 @@
+import { parseDateTimeLocal } from "./dates";
+
 const ASSIGNMENT_NAME_MIN = 2;
 const ASSIGNMENT_NAME_MAX = 100;
 const COURSE_MAX = 50;
@@ -22,8 +24,8 @@ export function validateHomeworkForm({ assignmentName, course, dueDate }) {
   if (!dueDate) {
     errors.dueDate = "Due date is required.";
   } else {
-    const parsed = new Date(`${dueDate}:00`);
-    if (Number.isNaN(parsed.getTime())) {
+    const parsed = parseDateTimeLocal(dueDate);
+    if (!parsed) {
       errors.dueDate = "Due date is not valid.";
     } else if (parsed <= new Date()) {
       errors.dueDate = "Due date must be in the future.";

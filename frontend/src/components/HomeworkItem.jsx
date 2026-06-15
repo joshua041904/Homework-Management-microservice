@@ -1,5 +1,7 @@
+import { formatDueDate } from "../utils/dates";
+
 export default function HomeworkItem({ hw }) {
-  const due = hw.due_date ? new Date(hw.due_date) : null;
+  const dueLabel = formatDueDate(hw.due_date);
 
   return (
     <li className="homework-item">
@@ -9,9 +11,7 @@ export default function HomeworkItem({ hw }) {
           <span className="homework-item__course">{hw.course}</span>
         )}
       </div>
-      {due && (
-        <span className="homework-item__due">Due {due.toLocaleString()}</span>
-      )}
+      <span className="homework-item__due">Due {dueLabel}</span>
     </li>
   );
 }
