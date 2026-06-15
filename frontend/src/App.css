@@ -66,6 +66,12 @@
   font-weight: 400;
 }
 
+.field-error {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--color-error);
+}
+
 .homework-form__actions {
   display: flex;
   justify-content: flex-start;
