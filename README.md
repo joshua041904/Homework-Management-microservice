@@ -72,7 +72,7 @@ This will:
 
 ## **Full Local Demo (Backend + Frontend)**
 
-The web UI requires the Docker backend to be running first. The Vite dev server proxies `/api` requests to `http://localhost:8080`. If the gateway is not running, the browser will show HTTP 500 errors (Vite proxy connection refused). See [RCA-api-homework-users-500.md](RCA-api-homework-users-500.md) for details.
+The web UI requires the Docker backend to be running first. The Vite dev server proxies `/api` requests to `http://localhost:8080`. If the gateway is not running, the browser will show HTTP 500 errors (Vite proxy connection refused). See [docs/RCA-api-homework-users-500.md](docs/RCA-api-homework-users-500.md) for details.
 
 **Terminal 1 — start the backend:**
 
@@ -98,6 +98,8 @@ The web UI requires the Docker backend to be running first. The Vite dev server 
 
 Open http://localhost:5173 in your browser. The UI loads homework for user `1` by default.
 
+For a step-by-step demo script (happy path, validation, and error recovery), see **[docs/demo-e2e-checklist.md](docs/demo-e2e-checklist.md)**.
+
 **Quick backend check before opening the UI:**
 
 ```bash
@@ -107,7 +109,7 @@ Open http://localhost:5173 in your browser. The UI loads homework for user `1` b
 
 ## **Web UI Demo**
 
-With both terminals running:
+With both terminals running, follow **[docs/demo-e2e-checklist.md](docs/demo-e2e-checklist.md)** or this quick pass:
 
 1. Open http://localhost:5173
 2. Confirm the homework list loads (empty list is OK on a fresh database)
@@ -236,7 +238,11 @@ You will see "status": "unhealthy" for notification-service and a 503 status cod
 
 HomeworkManager/
 ├── README.md
-├── RCA-api-homework-users-500.md
+├── docs/
+│ ├── demo-polish-plan.md
+│ ├── demo-e2e-checklist.md
+│ ├── RCA-api-homework-users-500.md
+│ └── RCA-homework-submit-field-required.md
 ├── test.sh
 ├── CODE_PROVENANCE.md
 ├── docker-compose.yml
