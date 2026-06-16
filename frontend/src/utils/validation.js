@@ -4,7 +4,12 @@ const ASSIGNMENT_NAME_MIN = 2;
 const ASSIGNMENT_NAME_MAX = 100;
 const COURSE_MAX = 50;
 
-export function validateHomeworkForm({ assignmentName, course, dueDate }) {
+export function validateHomeworkForm({
+  assignmentName,
+  course,
+  dueDate,
+  mode = "create",
+}) {
   const errors = {};
 
   const name = assignmentName.trim();
@@ -27,7 +32,7 @@ export function validateHomeworkForm({ assignmentName, course, dueDate }) {
     const parsed = parseDateTimeLocal(dueDate);
     if (!parsed) {
       errors.dueDate = "Due date is not valid.";
-    } else if (parsed <= new Date()) {
+    } else if (mode !== "edit" && parsed <= new Date()) {
       errors.dueDate = "Due date must be in the future.";
     }
   }

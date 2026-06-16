@@ -1,9 +1,21 @@
 # main.py (notification-service)
 from fastapi import FastAPI, HTTPException, Depends
 from sqlmodel import Session
-from db import init_db, get_session, db_create_notification, Notifications
+from db import (
+    init_db,
+    get_session,
+    db_create_notification,
+    db_get_notification_by_homework_id,
+    Notifications,
+)
 
-from models import HealthResponse, HealthStatus, NotificationCreate, NotificationUpdate, NotificationResponse
+from models import (
+    HealthResponse,
+    HealthStatus,
+    NotificationCreate,
+    NotificationByHomeworkUpdate,
+    NotificationResponse,
+)
 
 app = FastAPI(title="Notification Service")
 
@@ -35,6 +47,24 @@ async def create_notification(notification: NotificationCreate, session: Session
         due_date = notification.due_date,
     )
     return notification_row
+
+# PUT /notifications/by-homework/{homework_id}
+@app.put("/by-homework/{homework_id}", response_model=NotificationResponse)
+async def update_notification_by_homework(
+    homework_id: int,
+    update: NotificationByHomeworkUpdate,
+    session: Session = Depends(get_session),
+):
+    notification = db_get_notification_by_homework_id(session, homework_id)
+    if not notification:
+        raise HTTPException(status_code=404, detail="Notification not found")
+
+    notification.message = update.message
+    notification.due_date = update.due_date
+    session.add(notification)
+    session.commit()
+    session.refresh(notification)
+    return notification
 
 # GET /notifications/{notifications_id}
 @app.get("/{notification_id}", response_model=NotificationResponse)

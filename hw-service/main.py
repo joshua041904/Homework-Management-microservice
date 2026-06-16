@@ -1,6 +1,6 @@
 # main.py (hw-service)
-from typing import List
-from fastapi import FastAPI, HTTPException, Depends
+from typing import List, Optional
+from fastapi import FastAPI, HTTPException, Depends, Query
 from fastapi.responses import JSONResponse
 from sqlmodel import Session
 import os
@@ -86,6 +86,34 @@ async def create_notification(hw: Homework):
     return response.json()
 
 
+async def update_notification_for_homework(hw: Homework):
+    """Update the notification linked to this homework assignment."""
+    payload = {
+        "message": f"Reminder: {hw.assignment_name} is due on {hw.due_date.isoformat()}",
+        "due_date": hw.due_date.isoformat(),
+    }
+
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.put(
+                f"{NOTIFICATION_SERVICE_URL}/by-homework/{hw.id}",
+                json=payload,
+            )
+    except httpx.RequestError as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Could not reach Notification Service: {e}",
+        )
+
+    if response.status_code != 200:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to update notification (status {response.status_code})",
+        )
+
+    return response.json()
+
+
 # ---------- Health endpoint ----------
 @app.get("/health", response_model=HealthResponse)
 async def health_check():
@@ -166,20 +194,38 @@ async def get_homework(hw_id: int, session: Session = Depends(get_session)):
 
 # PUT /homework/{id}
 @app.put("/{hw_id}", response_model=HomeworkResponse)
-async def update_homework(hw_id: int, hw_update: HomeworkUpdate, session: Session = Depends(get_session)):
-    # Retrieve hw from database
+async def update_homework(
+    hw_id: int,
+    hw_update: HomeworkUpdate,
+    user_id: Optional[int] = Query(default=None),
+    session: Session = Depends(get_session),
+):
     hw = session.get(Homework, hw_id)
     if not hw:
         raise HTTPException(status_code=404, detail="Homework not found")
-    
-    # Apply updates
+
+    if user_id is not None and hw.user_id != user_id:
+        raise HTTPException(
+            status_code=403,
+            detail="Not allowed to edit this assignment",
+        )
+
     hw_data = hw_update.model_dump(exclude_unset=True)
+    old_name = hw.assignment_name
+    old_due = hw.due_date
+
     for key, value in hw_data.items():
         setattr(hw, key, value)
 
     session.add(hw)
     session.commit()
     session.refresh(hw)
+
+    name_changed = "assignment_name" in hw_data and hw.assignment_name != old_name
+    due_changed = "due_date" in hw_data and hw.due_date != old_due
+    if name_changed or due_changed:
+        await update_notification_for_homework(hw)
+
     return hw
 
 

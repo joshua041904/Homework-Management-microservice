@@ -1,6 +1,13 @@
 import HomeworkItem from "./HomeworkItem";
 
-export default function HomeworkList({ items }) {
+export default function HomeworkList({
+  items,
+  userId,
+  editingId,
+  onEdit,
+  onCancelEdit,
+  onUpdate,
+}) {
   if (!items?.length) {
     return (
       <div className="empty-state">
@@ -13,7 +20,15 @@ export default function HomeworkList({ items }) {
   return (
     <ul className="homework-list">
       {items.map((hw) => (
-        <HomeworkItem key={hw.id} hw={hw} />
+        <HomeworkItem
+          key={hw.id}
+          hw={hw}
+          userId={userId}
+          isEditing={editingId === hw.id}
+          onEdit={onEdit}
+          onCancelEdit={onCancelEdit}
+          onUpdate={onUpdate}
+        />
       ))}
     </ul>
   );

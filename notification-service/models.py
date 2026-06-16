@@ -33,6 +33,10 @@ class NotificationUpdate(BaseModel):
     message: str
     due_date: datetime
 
+class NotificationByHomeworkUpdate(BaseModel):
+    message: str
+    due_date: datetime
+
 class NotificationResponse(BaseModel):
     id: int
     user_id: int 

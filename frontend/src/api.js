@@ -51,3 +51,10 @@ export function createUser(payload) {
 export function createHomework(payload) {
   return api("/homework/", { method: "POST", body: payload });
 }
+
+export function updateHomework(id, userId, payload) {
+  return api(`/homework/${id}?user_id=${userId}`, {
+    method: "PUT",
+    body: payload,
+  });
+}

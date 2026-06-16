@@ -75,6 +75,16 @@ export function toApiDateTime(datetimeLocalValue) {
 }
 
 /**
+ * Convert an API ISO datetime to a datetime-local input value (local wall-clock).
+ */
+export function toDateTimeLocal(isoString) {
+  const date = parseApiDateTime(isoString);
+  if (!date) return "";
+
+  return `${date.getFullYear()}-${padTwo(date.getMonth() + 1)}-${padTwo(date.getDate())}T${padTwo(date.getHours())}:${padTwo(date.getMinutes())}`;
+}
+
+/**
  * Format an API due_date for UI display.
  */
 export function formatDueDate(isoString) {

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
-import { createHomework, listHomeworkForUser } from "./api";
+import { createHomework, listHomeworkForUser, updateHomework } from "./api";
 import HomeworkList from "./components/HomeworkList";
-import AddHomeworkForm from "./components/AddHomeworkForm";
+import HomeworkForm from "./components/HomeworkForm";
 import UserBar from "./components/UserBar";
 import {
   HomeworkListError,
@@ -15,6 +15,7 @@ export default function App() {
   const [items, setItems] = useState([]);
   const [listErr, setListErr] = useState("");
   const [loading, setLoading] = useState(true);
+  const [editingId, setEditingId] = useState(null);
 
   const refresh = useCallback(async (id = userId) => {
     setListErr("");
@@ -35,8 +36,18 @@ export default function App() {
     refresh(userId);
   }, [userId, refresh]);
 
+  useEffect(() => {
+    setEditingId(null);
+  }, [userId]);
+
   async function handleCreate(payload) {
     await createHomework(payload);
+    await refresh(userId);
+  }
+
+  async function handleUpdate(id, payload) {
+    await updateHomework(id, userId, payload);
+    setEditingId(null);
     await refresh(userId);
   }
 
@@ -49,7 +60,7 @@ export default function App() {
 
       <section className="panel">
         <h2 className="panel__title">Add assignment</h2>
-        <AddHomeworkForm userId={userId} onCreate={handleCreate} />
+        <HomeworkForm mode="create" userId={userId} onSubmit={handleCreate} />
       </section>
 
       <section className="panel">
@@ -59,7 +70,14 @@ export default function App() {
         ) : listErr ? (
           <HomeworkListError message={listErr} onRetry={() => refresh(userId)} />
         ) : (
-          <HomeworkList items={items} />
+          <HomeworkList
+            items={items}
+            userId={userId}
+            editingId={editingId}
+            onEdit={setEditingId}
+            onCancelEdit={() => setEditingId(null)}
+            onUpdate={handleUpdate}
+          />
         )}
       </section>
     </div>

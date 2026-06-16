@@ -1,6 +1,6 @@
 from typing import Optional
 
-from sqlmodel import SQLModel, Field, create_engine, Session
+from sqlmodel import SQLModel, Field, create_engine, Session, select
 from datetime import datetime
 import os
 
@@ -53,3 +53,10 @@ def db_create_notification(
     session.commit()
     session.refresh(notification)
     return notification
+
+
+def db_get_notification_by_homework_id(
+    session: Session, homework_id: int
+) -> Optional[Notifications]:
+    statement = select(Notifications).where(Notifications.homework_id == homework_id)
+    return session.exec(statement).first()

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { formatApiError } from "../utils/errors";
-import { toApiDateTime } from "../utils/dates";
+import { toApiDateTime, toDateTimeLocal } from "../utils/dates";
 import { validateHomeworkForm } from "../utils/validation";
 
 const EMPTY_FIELD_ERRORS = {
@@ -9,10 +9,41 @@ const EMPTY_FIELD_ERRORS = {
   dueDate: "",
 };
 
-export default function AddHomeworkForm({ userId, onCreate }) {
-  const [assignmentName, setAssignmentName] = useState("");
-  const [course, setCourse] = useState("");
-  const [dueDate, setDueDate] = useState(""); // yyyy-mm-ddThh:mm (local)
+function buildInitialFields(mode, initialValues) {
+  if (mode === "edit" && initialValues) {
+    return {
+      assignmentName: initialValues.assignment_name ?? "",
+      course: initialValues.course ?? "",
+      dueDate: toDateTimeLocal(initialValues.due_date),
+    };
+  }
+
+  return {
+    assignmentName: "",
+    course: "",
+    dueDate: "",
+  };
+}
+
+export default function HomeworkForm({
+  mode = "create",
+  userId,
+  initialValues,
+  idPrefix = "",
+  onSubmit,
+  onCancel,
+}) {
+  const isEdit = mode === "edit";
+  const assignmentId = `${idPrefix}assignment-name`;
+  const courseId = `${idPrefix}course`;
+  const dueDateId = `${idPrefix}due-date`;
+
+  const initialFields = buildInitialFields(mode, initialValues);
+  const [assignmentName, setAssignmentName] = useState(
+    () => initialFields.assignmentName
+  );
+  const [course, setCourse] = useState(() => initialFields.course);
+  const [dueDate, setDueDate] = useState(() => initialFields.dueDate);
   const [fieldErrors, setFieldErrors] = useState(EMPTY_FIELD_ERRORS);
   const [err, setErr] = useState("");
   const [saving, setSaving] = useState(false);
@@ -31,6 +62,7 @@ export default function AddHomeworkForm({ userId, onCreate }) {
       assignmentName,
       course,
       dueDate,
+      mode,
     });
 
     if (Object.keys(errors).length > 0) {
@@ -42,16 +74,23 @@ export default function AddHomeworkForm({ userId, onCreate }) {
     setSaving(true);
 
     try {
-      await onCreate({
-        user_id: userId,
+      const payload = {
         assignment_name: values.assignmentName,
         course: values.course,
         due_date: toApiDateTime(values.dueDate),
-      });
+      };
 
-      setAssignmentName("");
-      setCourse("");
-      setDueDate("");
+      if (isEdit) {
+        await onSubmit(payload);
+      } else {
+        await onSubmit({
+          user_id: userId,
+          ...payload,
+        });
+        setAssignmentName("");
+        setCourse("");
+        setDueDate("");
+      }
     } catch (e2) {
       setErr(formatApiError(e2));
     } finally {
@@ -63,11 +102,11 @@ export default function AddHomeworkForm({ userId, onCreate }) {
     <form className="homework-form" onSubmit={submit} noValidate>
       <div className="homework-form__fields">
         <div className="homework-form__field homework-form__field--wide">
-          <label className="homework-form__label" htmlFor="assignment-name">
+          <label className="homework-form__label" htmlFor={assignmentId}>
             Assignment name
           </label>
           <input
-            id="assignment-name"
+            id={assignmentId}
             placeholder="e.g. Math Worksheet"
             value={assignmentName}
             onChange={(e) => {
@@ -76,12 +115,12 @@ export default function AddHomeworkForm({ userId, onCreate }) {
             }}
             aria-invalid={Boolean(fieldErrors.assignmentName)}
             aria-describedby={
-              fieldErrors.assignmentName ? "assignment-name-error" : undefined
+              fieldErrors.assignmentName ? `${assignmentId}-error` : undefined
             }
           />
           {fieldErrors.assignmentName && (
             <p
-              id="assignment-name-error"
+              id={`${assignmentId}-error`}
               className="field-error"
               role="alert"
             >
@@ -91,11 +130,11 @@ export default function AddHomeworkForm({ userId, onCreate }) {
         </div>
 
         <div className="homework-form__field">
-          <label className="homework-form__label" htmlFor="course">
+          <label className="homework-form__label" htmlFor={courseId}>
             Course <span className="homework-form__optional">(optional)</span>
           </label>
           <input
-            id="course"
+            id={courseId}
             placeholder="e.g. Biology"
             value={course}
             onChange={(e) => {
@@ -103,21 +142,21 @@ export default function AddHomeworkForm({ userId, onCreate }) {
               clearFieldError("course");
             }}
             aria-invalid={Boolean(fieldErrors.course)}
-            aria-describedby={fieldErrors.course ? "course-error" : undefined}
+            aria-describedby={fieldErrors.course ? `${courseId}-error` : undefined}
           />
           {fieldErrors.course && (
-            <p id="course-error" className="field-error" role="alert">
+            <p id={`${courseId}-error`} className="field-error" role="alert">
               {fieldErrors.course}
             </p>
           )}
         </div>
 
         <div className="homework-form__field">
-          <label className="homework-form__label" htmlFor="due-date">
+          <label className="homework-form__label" htmlFor={dueDateId}>
             Due date
           </label>
           <input
-            id="due-date"
+            id={dueDateId}
             type="datetime-local"
             value={dueDate}
             onChange={(e) => {
@@ -125,10 +164,12 @@ export default function AddHomeworkForm({ userId, onCreate }) {
               clearFieldError("dueDate");
             }}
             aria-invalid={Boolean(fieldErrors.dueDate)}
-            aria-describedby={fieldErrors.dueDate ? "due-date-error" : undefined}
+            aria-describedby={
+              fieldErrors.dueDate ? `${dueDateId}-error` : undefined
+            }
           />
           {fieldErrors.dueDate && (
-            <p id="due-date-error" className="field-error" role="alert">
+            <p id={`${dueDateId}-error`} className="field-error" role="alert">
               {fieldErrors.dueDate}
             </p>
           )}
@@ -136,12 +177,28 @@ export default function AddHomeworkForm({ userId, onCreate }) {
       </div>
 
       <div className="homework-form__actions">
+        {isEdit && onCancel && (
+          <button
+            className="homework-form__cancel"
+            type="button"
+            onClick={onCancel}
+            disabled={saving}
+          >
+            Cancel
+          </button>
+        )}
         <button
           className="homework-form__submit"
           type="submit"
           disabled={saving}
         >
-          {saving ? "Adding…" : "Add assignment"}
+          {saving
+            ? isEdit
+              ? "Saving…"
+              : "Adding…"
+            : isEdit
+              ? "Save changes"
+              : "Add assignment"}
         </button>
       </div>
 
