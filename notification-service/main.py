@@ -6,6 +6,7 @@ from db import (
     get_session,
     db_create_notification,
     db_get_notification_by_homework_id,
+    db_delete_notification_by_homework_id,
     Notifications,
 )
 
@@ -65,6 +66,17 @@ async def update_notification_by_homework(
     session.commit()
     session.refresh(notification)
     return notification
+
+# DELETE /notifications/by-homework/{homework_id}
+@app.delete("/by-homework/{homework_id}")
+async def delete_notification_by_homework(
+    homework_id: int,
+    session: Session = Depends(get_session),
+):
+    deleted = db_delete_notification_by_homework_id(session, homework_id)
+    if not deleted:
+        return {"message": "No notification to delete"}
+    return {"message": "Notification deleted"}
 
 # GET /notifications/{notifications_id}
 @app.get("/{notification_id}", response_model=NotificationResponse)

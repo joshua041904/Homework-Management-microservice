@@ -7,6 +7,7 @@ export default function HomeworkList({
   onEdit,
   onCancelEdit,
   onUpdate,
+  onDelete,
 }) {
   if (!items?.length) {
     return (
@@ -28,6 +29,7 @@ export default function HomeworkList({
           onEdit={onEdit}
           onCancelEdit={onCancelEdit}
           onUpdate={onUpdate}
+          onDelete={onDelete}
         />
       ))}
     </ul>

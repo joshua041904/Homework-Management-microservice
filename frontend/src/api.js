@@ -58,3 +58,7 @@ export function updateHomework(id, userId, payload) {
     body: payload,
   });
 }
+
+export function deleteHomework(id, userId) {
+  return api(`/homework/${id}?user_id=${userId}`, { method: "DELETE" });
+}

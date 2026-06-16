@@ -1,5 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
-import { createHomework, listHomeworkForUser, updateHomework } from "./api";
+import {
+  createHomework,
+  deleteHomework,
+  listHomeworkForUser,
+  updateHomework,
+} from "./api";
 import HomeworkList from "./components/HomeworkList";
 import HomeworkForm from "./components/HomeworkForm";
 import UserBar from "./components/UserBar";
@@ -7,7 +12,7 @@ import {
   HomeworkListError,
   HomeworkListLoading,
 } from "./components/HomeworkListStatus";
-import { formatListError } from "./utils/errors";
+import { ApiError, formatListError } from "./utils/errors";
 import "./App.css";
 
 export default function App() {
@@ -51,6 +56,25 @@ export default function App() {
     await refresh(userId);
   }
 
+  function removeItemFromList(id) {
+    setEditingId((current) => (current === id ? null : current));
+    setItems((current) => current.filter((item) => item.id !== id));
+  }
+
+  async function handleDelete(id) {
+    try {
+      await deleteHomework(id, userId);
+    } catch (e) {
+      if (e instanceof ApiError && e.status === 404) {
+        removeItemFromList(id);
+        return;
+      }
+      throw e;
+    }
+
+    removeItemFromList(id);
+  }
+
   return (
     <div className="app">
       <header className="app__header">
@@ -77,6 +101,7 @@ export default function App() {
             onEdit={setEditingId}
             onCancelEdit={() => setEditingId(null)}
             onUpdate={handleUpdate}
+            onDelete={handleDelete}
           />
         )}
       </section>

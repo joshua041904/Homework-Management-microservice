@@ -60,3 +60,13 @@ def db_get_notification_by_homework_id(
 ) -> Optional[Notifications]:
     statement = select(Notifications).where(Notifications.homework_id == homework_id)
     return session.exec(statement).first()
+
+
+def db_delete_notification_by_homework_id(session: Session, homework_id: int) -> bool:
+    notification = db_get_notification_by_homework_id(session, homework_id)
+    if not notification:
+        return False
+
+    session.delete(notification)
+    session.commit()
+    return True

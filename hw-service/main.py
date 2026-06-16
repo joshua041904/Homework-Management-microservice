@@ -114,6 +114,31 @@ async def update_notification_for_homework(hw: Homework):
     return response.json()
 
 
+def delete_attachment_file(hw: Homework):
+    """Remove stored attachment from disk. Stub for Task 4 file uploads."""
+    pass
+
+
+async def delete_notification_for_homework(homework_id: int):
+    """Delete the notification linked to this homework assignment."""
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.delete(
+                f"{NOTIFICATION_SERVICE_URL}/by-homework/{homework_id}",
+            )
+    except httpx.RequestError as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Could not reach Notification Service: {e}",
+        )
+
+    if response.status_code != 200:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to delete notification (status {response.status_code})",
+        )
+
+
 # ---------- Health endpoint ----------
 @app.get("/health", response_model=HealthResponse)
 async def health_check():
@@ -231,14 +256,27 @@ async def update_homework(
 
 # DELETE /homework/{id}
 @app.delete("/{hw_id}")
-def delete_homework(hw_id: int, session: Session = Depends(get_session)):
+async def delete_homework(
+    hw_id: int,
+    user_id: Optional[int] = Query(default=None),
+    session: Session = Depends(get_session),
+):
     hw = session.get(Homework, hw_id)
     if not hw:
         raise HTTPException(status_code=404, detail="Homework not found")
 
+    if user_id is not None and hw.user_id != user_id:
+        raise HTTPException(
+            status_code=403,
+            detail="Not allowed to delete this assignment",
+        )
+
+    await delete_notification_for_homework(hw_id)
+    delete_attachment_file(hw)
+
     session.delete(hw)
     session.commit()
-    return {"message": "HW Deleted"}
+    return {"message": "Homework deleted"}
 
 # GET homework/users/{user_id}/homework
 @app.get("/users/{user_id}/homework", response_model=List[HomeworkResponse])
