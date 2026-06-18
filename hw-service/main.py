@@ -1,7 +1,7 @@
 # main.py (hw-service)
 from typing import List, Optional
-from fastapi import FastAPI, HTTPException, Depends, Query
-from fastapi.responses import JSONResponse
+from fastapi import FastAPI, HTTPException, Depends, Query, UploadFile, File
+from fastapi.responses import JSONResponse, FileResponse
 from sqlmodel import Session
 import os
 import time
@@ -15,6 +15,13 @@ from models import (
     HomeworkCreate,
     HomeworkResponse,
     HomeworkUpdate,
+)
+from storage import (
+    delete_storage_file,
+    get_storage_path,
+    save_upload,
+    safe_download_filename,
+    validate_upload,
 )
 
 app = FastAPI(title="HW Service")
@@ -114,9 +121,24 @@ async def update_notification_for_homework(hw: Homework):
     return response.json()
 
 
-def delete_attachment_file(hw: Homework):
-    """Remove stored attachment from disk. Stub for Task 4 file uploads."""
-    pass
+def verify_homework_owner(hw: Homework, user_id: Optional[int], action: str) -> None:
+    if user_id is not None and hw.user_id != user_id:
+        raise HTTPException(
+            status_code=403,
+            detail=f"Not allowed to {action} this assignment",
+        )
+
+
+def clear_homework_file_metadata(hw: Homework) -> None:
+    hw.file_original_name = None
+    hw.file_storage_name = None
+    hw.file_content_type = None
+    hw.file_size_bytes = None
+
+
+def delete_attachment_file(hw: Homework) -> None:
+    if hw.file_storage_name:
+        delete_storage_file(hw.file_storage_name)
 
 
 async def delete_notification_for_homework(homework_id: int):
@@ -207,6 +229,98 @@ async def create_homework(hw: HomeworkCreate, session: Session = Depends(get_ses
     return hw_row
 
 
+# GET homework/users/{user_id}/homework
+@app.get("/users/{user_id}/homework", response_model=List[HomeworkResponse])
+async def list_homework_for_user(user_id: int, session: Session = Depends(get_session)):
+    await verify_user_exists(user_id)
+    return db_get_homework_for_user(session, user_id)
+
+
+# ---------- File attachment endpoints ----------
+
+@app.post("/{hw_id}/file", response_model=HomeworkResponse)
+async def upload_homework_file(
+    hw_id: int,
+    file: UploadFile = File(...),
+    user_id: Optional[int] = Query(default=None),
+    session: Session = Depends(get_session),
+):
+    hw = session.get(Homework, hw_id)
+    if not hw:
+        raise HTTPException(status_code=404, detail="Homework not found")
+
+    verify_homework_owner(hw, user_id, "modify")
+
+    content = await file.read()
+    try:
+        content_type = validate_upload(file.filename or "", file.content_type, len(content))
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+    delete_attachment_file(hw)
+
+    storage_name, saved_type, size = save_upload(content, file.filename or "upload", content_type)
+    hw.file_original_name = file.filename
+    hw.file_storage_name = storage_name
+    hw.file_content_type = saved_type
+    hw.file_size_bytes = size
+
+    session.add(hw)
+    session.commit()
+    session.refresh(hw)
+    return hw
+
+
+@app.get("/{hw_id}/file")
+async def download_homework_file(
+    hw_id: int,
+    user_id: Optional[int] = Query(default=None),
+    session: Session = Depends(get_session),
+):
+    hw = session.get(Homework, hw_id)
+    if not hw:
+        raise HTTPException(status_code=404, detail="Homework not found")
+
+    verify_homework_owner(hw, user_id, "access")
+
+    if not hw.file_storage_name or not hw.file_original_name:
+        raise HTTPException(status_code=404, detail="No attachment found")
+
+    path = get_storage_path(hw.file_storage_name)
+    if not path.is_file():
+        raise HTTPException(status_code=404, detail="Attachment file not found")
+
+    return FileResponse(
+        path,
+        media_type=hw.file_content_type or "application/octet-stream",
+        filename=safe_download_filename(hw.file_original_name),
+    )
+
+
+@app.delete("/{hw_id}/file", response_model=HomeworkResponse)
+async def delete_homework_file_attachment(
+    hw_id: int,
+    user_id: Optional[int] = Query(default=None),
+    session: Session = Depends(get_session),
+):
+    hw = session.get(Homework, hw_id)
+    if not hw:
+        raise HTTPException(status_code=404, detail="Homework not found")
+
+    verify_homework_owner(hw, user_id, "modify")
+
+    if not hw.file_storage_name:
+        raise HTTPException(status_code=404, detail="No attachment found")
+
+    delete_attachment_file(hw)
+    clear_homework_file_metadata(hw)
+
+    session.add(hw)
+    session.commit()
+    session.refresh(hw)
+    return hw
+
+
 # GET /homework/{id}
 @app.get("/{hw_id}", response_model=HomeworkResponse)
 async def get_homework(hw_id: int, session: Session = Depends(get_session)):
@@ -273,13 +387,8 @@ async def delete_homework(
 
     await delete_notification_for_homework(hw_id)
     delete_attachment_file(hw)
+    clear_homework_file_metadata(hw)
 
     session.delete(hw)
     session.commit()
     return {"message": "Homework deleted"}
-
-# GET homework/users/{user_id}/homework
-@app.get("/users/{user_id}/homework", response_model=List[HomeworkResponse])
-async def list_homework_for_user(user_id: int, session: Session = Depends(get_session)):
-    await verify_user_exists(user_id)
-    return db_get_homework_for_user(session, user_id)

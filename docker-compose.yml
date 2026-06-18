@@ -63,6 +63,9 @@ services:
       PG_DSN: postgresql://hw_service:hw_password@hw-db:5432/homework_db
       USER_HEALTH_URL: http://user-service:8000/health
       NOTIF_HEALTH_URL: http://notification-service:8000/health
+      UPLOAD_DIR: /data/uploads
+    volumes:
+      - hw_uploads:/data/uploads
     healthcheck:
       test: ["CMD-SHELL", "curl -fsS http://localhost:8000/health || exit 1"]
       interval: 10s
@@ -83,6 +86,9 @@ services:
       PG_DSN: postgresql://hw_service:hw_password@hw-db:5432/homework_db
       USER_HEALTH_URL: http://user-service:8000/health
       NOTIF_HEALTH_URL: http://notification-service:8000/health
+      UPLOAD_DIR: /data/uploads
+    volumes:
+      - hw_uploads:/data/uploads
     healthcheck:
       test: ["CMD-SHELL", "curl -fsS http://localhost:8000/health || exit 1"]
       interval: 10s
@@ -150,5 +156,6 @@ services:
 volumes:
   user_db_data:
   hw_db_data:
+  hw_uploads:
   notification_db_data:
   pgadmin_data:

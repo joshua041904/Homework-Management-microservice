@@ -39,4 +39,7 @@ class HomeworkResponse(BaseModel):
     course: Optional[str] = None
     due_date: datetime
     created_at: datetime
+    file_original_name: Optional[str] = None
+    file_content_type: Optional[str] = None
+    file_size_bytes: Optional[int] = None
     model_config = ConfigDict(from_attributes=True)

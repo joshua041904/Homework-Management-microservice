@@ -39,6 +39,38 @@ export async function api(path, { method = "GET", body, headers } = {}) {
   return text;
 }
 
+async function apiMultipart(path, { method = "POST", body } = {}) {
+  let res;
+
+  try {
+    res = await fetch(`${API_BASE}${path}`, {
+      method,
+      body,
+    });
+  } catch (error) {
+    throw error;
+  }
+
+  const text = await res.text();
+
+  if (!res.ok) {
+    let detail = parseApiErrorBody(text);
+    if (!detail && res.status === 413) {
+      detail = "File exceeds the upload size limit.";
+    }
+    throw new ApiError({
+      status: res.status,
+      detail,
+      body: text,
+      statusText: res.statusText,
+    });
+  }
+
+  const contentType = res.headers.get("content-type") || "";
+  if (contentType.includes("application/json")) return JSON.parse(text);
+  return text;
+}
+
 export function listHomeworkForUser(userId) {
   return api(`/homework/users/${userId}/homework`);
 }
@@ -65,4 +97,21 @@ export function updateHomework(id, userId, payload) {
 
 export function deleteHomework(id, userId) {
   return api(`/homework/${id}?user_id=${userId}`, { method: "DELETE" });
+}
+
+export function uploadHomeworkFile(id, userId, file) {
+  const formData = new FormData();
+  formData.append("file", file);
+  return apiMultipart(`/homework/${id}/file?user_id=${userId}`, {
+    method: "POST",
+    body: formData,
+  });
+}
+
+export function deleteHomeworkFile(id, userId) {
+  return api(`/homework/${id}/file?user_id=${userId}`, { method: "DELETE" });
+}
+
+export function homeworkFileDownloadUrl(id, userId) {
+  return `${API_BASE}/homework/${id}/file?user_id=${userId}`;
 }

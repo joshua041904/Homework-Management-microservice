@@ -2,8 +2,11 @@ import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   deleteHomework,
+  deleteHomeworkFile,
   getHomework,
+  homeworkFileDownloadUrl,
   updateHomework,
+  uploadHomeworkFile,
 } from "../api";
 import HomeworkForm from "../components/HomeworkForm";
 import {
@@ -13,10 +16,17 @@ import {
 } from "../components/HomeworkListStatus";
 import { ApiError, formatApiError } from "../utils/errors";
 import { formatCreatedAt, formatDueDate } from "../utils/dates";
+import {
+  allowedFileAccept,
+  formatFileSize,
+  validateHomeworkFile,
+} from "../utils/files";
 import { homePath } from "../utils/routes";
 
 const DELETE_CONFIRM_MESSAGE =
   "Delete this assignment? This cannot be undone.";
+const REMOVE_FILE_CONFIRM_MESSAGE =
+  "Remove this attachment? The file will be deleted from the server.";
 
 export default function HomeworkDetailPage({ userId }) {
   const { id } = useParams();
@@ -30,6 +40,9 @@ export default function HomeworkDetailPage({ userId }) {
   const [isEditing, setIsEditing] = useState(false);
   const [deleteErr, setDeleteErr] = useState("");
   const [deleting, setDeleting] = useState(false);
+  const [attachErr, setAttachErr] = useState("");
+  const [attaching, setAttaching] = useState(false);
+  const [removingFile, setRemovingFile] = useState(false);
 
   const loadHomework = useCallback(async () => {
     if (!Number.isInteger(homeworkId) || homeworkId < 1) {
@@ -62,6 +75,7 @@ export default function HomeworkDetailPage({ userId }) {
   useEffect(() => {
     setIsEditing(false);
     setDeleteErr("");
+    setAttachErr("");
     loadHomework();
   }, [loadHomework, userId]);
 
@@ -93,8 +107,52 @@ export default function HomeworkDetailPage({ userId }) {
     }
   }
 
+  async function handleFileSelected(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const validationError = validateHomeworkFile(file);
+    if (validationError) {
+      setAttachErr(validationError);
+      e.target.value = "";
+      return;
+    }
+
+    setAttachErr("");
+    setAttaching(true);
+
+    try {
+      await uploadHomeworkFile(homeworkId, userId, file);
+      await loadHomework();
+    } catch (err) {
+      setAttachErr(formatApiError(err));
+    } finally {
+      setAttaching(false);
+      e.target.value = "";
+    }
+  }
+
+  async function handleRemoveAttachment() {
+    if (!window.confirm(REMOVE_FILE_CONFIRM_MESSAGE)) {
+      return;
+    }
+
+    setAttachErr("");
+    setRemovingFile(true);
+
+    try {
+      await deleteHomeworkFile(homeworkId, userId);
+      await loadHomework();
+    } catch (err) {
+      setAttachErr(formatApiError(err));
+    } finally {
+      setRemovingFile(false);
+    }
+  }
+
   const isOwner = hw?.user_id === userId;
   const backPath = homePath(userId);
+  const hasAttachment = Boolean(hw?.file_original_name);
 
   return (
     <section className="panel homework-detail">
@@ -154,7 +212,69 @@ export default function HomeworkDetailPage({ userId }) {
                   <dt>User ID</dt>
                   <dd>{hw.user_id}</dd>
                 </div>
+                <div className="homework-detail__field">
+                  <dt>Attachment</dt>
+                  <dd>
+                    {hasAttachment ? (
+                      <div className="homework-detail__attachment">
+                        <span>
+                          {hw.file_original_name} ({formatFileSize(hw.file_size_bytes)})
+                        </span>
+                        <div className="homework-detail__attachment-actions">
+                          <a
+                            className="homework-detail__download"
+                            href={homeworkFileDownloadUrl(hw.id, userId)}
+                            download={hw.file_original_name}
+                          >
+                            Download
+                          </a>
+                          {isOwner && (
+                            <button
+                              type="button"
+                              className="homework-detail__remove-file"
+                              onClick={handleRemoveAttachment}
+                              disabled={removingFile}
+                            >
+                              {removingFile ? "Removing…" : "Remove"}
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    ) : (
+                      "—"
+                    )}
+                  </dd>
+                </div>
               </dl>
+
+              {isOwner && (
+                <div className="homework-detail__upload">
+                  <label
+                    className="homework-form__label"
+                    htmlFor={`detail-upload-${hw.id}`}
+                  >
+                    {hasAttachment ? "Replace attachment" : "Attach file"}
+                  </label>
+                  <input
+                    id={`detail-upload-${hw.id}`}
+                    type="file"
+                    accept={allowedFileAccept()}
+                    onChange={handleFileSelected}
+                    disabled={attaching}
+                  />
+                  {attaching && (
+                    <p className="status-message status-message--muted">
+                      Uploading…
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {attachErr && (
+                <p className="status-message status-message--error">
+                  {attachErr}
+                </p>
+              )}
 
               <div className="homework-detail__actions">
                 <button

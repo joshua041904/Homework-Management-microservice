@@ -1,6 +1,7 @@
 from typing import List, Optional
 
 from sqlmodel import SQLModel, Field, create_engine, Session, select
+from sqlalchemy import text
 from datetime import datetime
 import os
 
@@ -19,11 +20,33 @@ class Homework(SQLModel, table=True):
     course: Optional[str] = None
     due_date: datetime
     created_at: datetime = Field(default_factory=datetime.utcnow)
+    file_original_name: Optional[str] = None
+    file_storage_name: Optional[str] = None
+    file_content_type: Optional[str] = None
+    file_size_bytes: Optional[int] = None
 
 # create tables if they don't exist
 def init_db():
     SQLModel.metadata.create_all(engine)
+    _migrate_schema()
     print("Database initialized and tables created (if not exist).")
+
+
+def _migrate_schema():
+    """Add file metadata columns to existing homework tables."""
+    columns = [
+        ("file_original_name", "VARCHAR"),
+        ("file_storage_name", "VARCHAR"),
+        ("file_content_type", "VARCHAR"),
+        ("file_size_bytes", "INTEGER"),
+    ]
+    with engine.begin() as conn:
+        for name, col_type in columns:
+            conn.execute(
+                text(
+                    f"ALTER TABLE homework ADD COLUMN IF NOT EXISTS {name} {col_type}"
+                )
+            )
 
 # close the database connection cleanly
 def close_db_connection():

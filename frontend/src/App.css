@@ -334,6 +334,43 @@
   cursor: not-allowed;
 }
 
+.homework-detail__attachment {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.homework-detail__attachment-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.homework-detail__download {
+  color: var(--color-accent);
+  text-decoration: none;
+  font-size: 0.95rem;
+}
+
+.homework-detail__download:hover {
+  text-decoration: underline;
+}
+
+.homework-detail__remove-file {
+  padding: 0.35em 0.75em;
+  font-size: 0.875rem;
+  color: var(--color-error);
+  border-color: color-mix(in srgb, var(--color-error) 40%, transparent);
+}
+
+.homework-detail__upload {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-bottom: 1.25rem;
+}
+
 @keyframes spin {
   to {
     transform: rotate(360deg);

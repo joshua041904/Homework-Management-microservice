@@ -1,12 +1,14 @@
 import { useState } from "react";
 import { formatApiError } from "../utils/errors";
 import { toApiDateTime, toDateTimeLocal } from "../utils/dates";
+import { allowedFileAccept, validateHomeworkFile } from "../utils/files";
 import { validateHomeworkForm } from "../utils/validation";
 
 const EMPTY_FIELD_ERRORS = {
   assignmentName: "",
   course: "",
   dueDate: "",
+  attachment: "",
 };
 
 function buildInitialFields(mode, initialValues) {
@@ -37,6 +39,7 @@ export default function HomeworkForm({
   const assignmentId = `${idPrefix}assignment-name`;
   const courseId = `${idPrefix}course`;
   const dueDateId = `${idPrefix}due-date`;
+  const attachmentId = `${idPrefix}attachment`;
 
   const initialFields = buildInitialFields(mode, initialValues);
   const [assignmentName, setAssignmentName] = useState(
@@ -44,6 +47,7 @@ export default function HomeworkForm({
   );
   const [course, setCourse] = useState(() => initialFields.course);
   const [dueDate, setDueDate] = useState(() => initialFields.dueDate);
+  const [selectedFile, setSelectedFile] = useState(null);
   const [fieldErrors, setFieldErrors] = useState(EMPTY_FIELD_ERRORS);
   const [err, setErr] = useState("");
   const [saving, setSaving] = useState(false);
@@ -70,6 +74,14 @@ export default function HomeworkForm({
       return;
     }
 
+    if (!isEdit && selectedFile) {
+      const fileError = validateHomeworkFile(selectedFile);
+      if (fileError) {
+        setFieldErrors({ ...EMPTY_FIELD_ERRORS, attachment: fileError });
+        return;
+      }
+    }
+
     setFieldErrors(EMPTY_FIELD_ERRORS);
     setSaving(true);
 
@@ -83,13 +95,17 @@ export default function HomeworkForm({
       if (isEdit) {
         await onSubmit(payload);
       } else {
-        await onSubmit({
-          user_id: userId,
-          ...payload,
-        });
+        await onSubmit(
+          {
+            user_id: userId,
+            ...payload,
+          },
+          selectedFile
+        );
         setAssignmentName("");
         setCourse("");
         setDueDate("");
+        setSelectedFile(null);
       }
     } catch (e2) {
       setErr(formatApiError(e2));
@@ -174,6 +190,37 @@ export default function HomeworkForm({
             </p>
           )}
         </div>
+
+        {!isEdit && (
+          <div className="homework-form__field homework-form__field--wide">
+            <label className="homework-form__label" htmlFor={attachmentId}>
+              Attachment{" "}
+              <span className="homework-form__optional">(optional)</span>
+            </label>
+            <input
+              id={attachmentId}
+              type="file"
+              accept={allowedFileAccept()}
+              onChange={(e) => {
+                setSelectedFile(e.target.files?.[0] ?? null);
+                clearFieldError("attachment");
+              }}
+              aria-invalid={Boolean(fieldErrors.attachment)}
+              aria-describedby={
+                fieldErrors.attachment ? `${attachmentId}-error` : undefined
+              }
+            />
+            {fieldErrors.attachment && (
+              <p
+                id={`${attachmentId}-error`}
+                className="field-error"
+                role="alert"
+              >
+                {fieldErrors.attachment}
+              </p>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="homework-form__actions">
@@ -195,7 +242,9 @@ export default function HomeworkForm({
           {saving
             ? isEdit
               ? "Saving…"
-              : "Adding…"
+              : selectedFile
+                ? "Adding & uploading…"
+                : "Adding…"
             : isEdit
               ? "Save changes"
               : "Add assignment"}

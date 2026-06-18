@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { createHomework, listHomeworkForUser } from "../api";
+import { createHomework, listHomeworkForUser, uploadHomeworkFile } from "../api";
 import HomeworkList from "../components/HomeworkList";
 import HomeworkForm from "../components/HomeworkForm";
 import {
@@ -32,8 +32,11 @@ export default function HomePage({ userId }) {
     refresh(userId);
   }, [userId, refresh]);
 
-  async function handleCreate(payload) {
-    await createHomework(payload);
+  async function handleCreate(payload, file) {
+    const hw = await createHomework(payload);
+    if (file) {
+      await uploadHomeworkFile(hw.id, userId, file);
+    }
     await refresh(userId);
   }
 
