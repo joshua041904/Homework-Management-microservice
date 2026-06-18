@@ -112,6 +112,32 @@
   min-width: 5rem;
 }
 
+.homework-list-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.75rem 1rem;
+  margin-bottom: 1rem;
+}
+
+.homework-list-toolbar__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  flex: 1 1 10rem;
+  min-width: 0;
+}
+
+.homework-list-toolbar__label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-text-muted);
+}
+
+.homework-list-toolbar__select {
+  width: 100%;
+}
+
 .homework-list {
   list-style: none;
   margin: 0;

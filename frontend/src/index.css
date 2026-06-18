@@ -52,12 +52,14 @@ h2 {
 }
 
 input,
+select,
 button {
   font-family: inherit;
   font-size: 1rem;
 }
 
-input {
+input,
+select {
   width: 100%;
   padding: 0.6em 0.75em;
   border-radius: 8px;
@@ -67,9 +69,15 @@ input {
   transition: border-color 0.2s;
 }
 
-input:focus {
+input:focus,
+select:focus {
   outline: none;
   border-color: var(--color-accent);
+}
+
+select:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 button {
