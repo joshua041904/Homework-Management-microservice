@@ -43,6 +43,10 @@ export function listHomeworkForUser(userId) {
   return api(`/homework/users/${userId}/homework`);
 }
 
+export function getHomework(id) {
+  return api(`/homework/${id}`);
+}
+
 export function createUser(payload) {
   // Note trailing slash behavior is handled by nginx, but we avoid redirects by using /
   return api("/users/", { method: "POST", body: payload });

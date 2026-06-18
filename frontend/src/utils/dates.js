@@ -92,3 +92,10 @@ export function formatDueDate(isoString) {
   if (!date) return isoString ? "Invalid date" : "—";
   return DUE_DATE_DISPLAY.format(date);
 }
+
+/**
+ * Format an API created_at timestamp for UI display.
+ */
+export function formatCreatedAt(isoString) {
+  return formatDueDate(isoString);
+}
